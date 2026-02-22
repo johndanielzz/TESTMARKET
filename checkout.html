@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>MatrixMarket - Checkout</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body{margin:0;font-family:"Poppins",sans-serif;background:#0f172a;color:#fff}
+    header{background:rgba(0,0,0,.72);display:flex;justify-content:space-between;align-items:center;padding:14px 18px;position:sticky;top:0;z-index:1000}
+    .logo{font-size:1.4rem;font-weight:800;color:#06b6d4}nav{display:flex;gap:12px;flex-wrap:wrap}nav a{color:#fff;text-decoration:none;font-weight:600}
+    .page{width:min(1120px,100% - 20px);margin:18px auto 28px;display:grid;grid-template-columns:1.35fr .9fr;gap:14px}
+    .card{background:rgba(255,255,255,.06);border:1px solid rgba(148,163,184,.22);border-radius:14px;padding:12px}
+    h1,h2,h3,p{margin:0}.title{margin-bottom:10px;color:#67e8f9}
+    .order-list{display:grid;gap:8px}.order-item{display:grid;grid-template-columns:66px 1fr auto;gap:9px;align-items:center;background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.2);border-radius:10px;padding:8px}
+    .order-item img{width:66px;height:66px;border-radius:8px;object-fit:cover;background:#020617}.meta{font-size:.86rem;color:#94a3b8}.name{font-weight:700;color:#e2e8f0}
+    .line{display:flex;justify-content:space-between;gap:8px;font-size:.93rem;color:#cbd5e1}.total{margin-top:6px;padding-top:8px;border-top:1px solid rgba(148,163,184,.2);font-size:1.04rem;font-weight:800;color:#e0f2fe}
+    .form-grid{display:grid;gap:8px}input,select,textarea{width:100%;border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.7);color:#e2e8f0;border-radius:10px;padding:10px;font:inherit}
+    textarea{min-height:86px;resize:vertical}.payment{display:grid;gap:8px;margin-top:8px}
+    .wallet{background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.25);border-radius:10px;padding:9px;font-size:.9rem}
+    .btn{border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#06b6d4,#4f46e5);color:#fff}
+    .btn-alt{background:rgba(30,41,59,.78);border:1px solid rgba(148,163,184,.3)}
+    .actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.msg{display:none;margin-top:10px;border-radius:10px;padding:10px;font-size:.9rem}
+    .msg.ok{background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.35);color:#86efac}
+    .msg.err{background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.35);color:#fca5a5}
+    .empty{text-align:center;color:#94a3b8;border:1px dashed rgba(148,163,184,.35);border-radius:10px;padding:16px}
+    .hint{margin-top:8px;color:#94a3b8;font-size:.82rem}
+    @media (max-width:920px){.page{grid-template-columns:1fr}}
+  </style>
+  <link rel="stylesheet" href="upgrade.css">
+  <script src="firebase-online-storage.js"></script>
+</head>
+<body>
+  <header>
+    <div class="logo">MatrixMarket</div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="cart.html">Cart</a>
+      <a href="buyers-orders.html">My Orders</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    <section class="card">
+      <h2 class="title">Confirm Order</h2>
+      <div id="orderList" class="order-list"></div>
+      <div style="margin-top:10px;display:grid;gap:6px;" id="summaryBox">
+        <div class="line"><span>Items</span><span id="sumItems">0</span></div>
+        <div class="line"><span>Subtotal</span><span id="sumSubtotal">0.00 GMD</span></div>
+        <div class="line"><span>Discount</span><span id="sumDiscount">0.00 GMD</span></div>
+        <div class="line"><span>Shipping</span><span id="sumShipping">0.00 GMD</span></div>
+        <div class="line total"><span>Total</span><span id="sumTotal">0.00 GMD</span></div>
+      </div>
+      <p class="hint">Order ID will be generated when you place the order.</p>
+    </section>
+
+    <aside class="card">
+      <h3 class="title">Delivery & Payment</h3>
+      <div class="form-grid">
+        <input id="buyerName" type="text" placeholder="Full Name">
+        <input id="buyerPhone" type="text" placeholder="Phone Number">
+        <input id="buyerEmail" type="email" placeholder="Email Address">
+        <textarea id="buyerAddress" placeholder="Delivery Address"></textarea>
+      </div>
+
+      <div class="payment">
+        <select id="paymentMethod">
+          <option value="wallet">Pay from Wallet Balance</option>
+          <option value="cod">Cash on Delivery</option>
+        </select>
+        <label style="font-size:.88rem;color:#cbd5e1;"><input id="termsCheck" type="checkbox" style="width:auto; margin-right:6px;"> I confirm my order details are correct.</label>
+      </div>
+
+      <div class="wallet" id="walletInfo">Wallet Balance: 0.00 GMD</div>
+      <div class="actions">
+        <button class="btn" id="placeOrderBtn" type="button">Place Order</button>
+        <a class="btn btn-alt" href="cart.html" style="text-decoration:none;display:inline-flex;align-items:center;">Back to Cart</a>
+      </div>
+      <div id="okMsg" class="msg ok"></div>
+      <div id="errMsg" class="msg err"></div>
+    </aside>
+  </main>
+
+  <script src="seller-core.js?v=20260222c"></script>
+  <script src="api-client.js"></script>
+  <script>
+    const state = {
+      cart: [],
+      buyer: null,
+      meta: null,
+      totals: { items: 0, subtotal: 0, discount: 0, shipping: 0, total: 0 },
+      balance: 0,
+      isSellerBuyer: false
+    };
+
+    function byId(id) { return document.getElementById(id); }
+    function num(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }
+    function money(v) { return num(v).toFixed(2) + " GMD"; }
+    function cleanEmail(v) { return String(v || "").trim().toLowerCase(); }
+    function read(key, fallback) {
+      try {
+        const data = JSON.parse(MMStorage.getItem(key) || "null");
+        return data ?? fallback;
+      } catch (_) {
+        return fallback;
+      }
+    }
+
+    function normalizeCart(raw) {
+      if (!Array.isArray(raw)) return [];
+      return raw.filter(function (item) { return item && item.name; }).map(function (item) {
+        return {
+          name: String(item.name || "Product"),
+          seller: String(item.seller || "N/A"),
+          sellerEmail: String(item.sellerEmail || ""),
+          image: String(item.image || "https://via.placeholder.com/80"),
+          category: String(item.category || "general"),
+          price: num(item.price),
+          quantity: Math.max(1, Math.floor(num(item.quantity || 1)))
+        };
+      });
+    }
+
+    function normalizeSellers(raw) {
+      if (Array.isArray(raw)) return raw.slice();
+      if (raw && typeof raw === "object") {
+        return Object.keys(raw).map(function (name) {
+          const row = raw[name] || {};
+          return { ...row, name: row.name || name, fullName: row.fullName || row.name || name, store: row.store || name };
+        });
+      }
+      return [];
+    }
+
+    function detectSellerBuyerAccount() {
+      const current = read("currentUser", null);
+      if (current && current.isSeller) return true;
+      const email = cleanEmail(current && current.email);
+      if (!email) return false;
+      const sellers = normalizeSellers(read("sellers", []));
+      return sellers.some(function (s) { return cleanEmail(s.email) === email; });
+    }
+
+    function findSellerIndex(sellers, item) {
+      const itemEmail = cleanEmail(item.sellerEmail);
+      const sellerName = String(item.seller || "").trim().toLowerCase();
+      if (itemEmail) {
+        const byEmail = sellers.findIndex(function (s) { return cleanEmail(s.email) === itemEmail; });
+        if (byEmail >= 0) return byEmail;
+      }
+      if (!sellerName) return -1;
+      return sellers.findIndex(function (s) {
+        const keys = [s.store, s.name, s.fullName, s.email].map(function (v) {
+          return String(v || "").trim().toLowerCase();
+        });
+        return keys.includes(sellerName);
+      });
+    }
+
+    function creditSellers(orderId, buyer, timestamp, paymentMethod) {
+      const sellersRaw = read("sellers", []);
+      const sellers = normalizeSellers(sellersRaw);
+      if (!sellers.length) return;
+
+      const payoutsRaw = read("sellerPayouts", []);
+      const payouts = Array.isArray(payoutsRaw) ? payoutsRaw : [];
+      state.cart.forEach(function (item) {
+        const idx = findSellerIndex(sellers, item);
+        if (idx < 0) return;
+        const amount = num(item.price) * Math.max(1, Math.floor(num(item.quantity || 1)));
+        sellers[idx].balance = num(sellers[idx].balance) + amount;
+        payouts.push({
+          id: "PAYOUT-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+          orderId: orderId,
+          sellerEmail: sellers[idx].email || item.sellerEmail || "",
+          sellerName: sellers[idx].store || sellers[idx].fullName || sellers[idx].name || item.seller || "Seller",
+          buyerEmail: buyer.email,
+          buyerName: buyer.name,
+          productName: item.name,
+          quantity: Math.max(1, Math.floor(num(item.quantity || 1))),
+          amount: amount,
+          source: "buyer_checkout",
+          paymentMethod: paymentMethod,
+          status: "credited",
+          createdAt: timestamp
+        });
+      });
+
+      MMStorage.setItem("sellers", JSON.stringify(sellers));
+      MMStorage.setItem("sellerPayouts", JSON.stringify(payouts));
+    }
+
+    function computeTotals() {
+      const items = state.cart.reduce(function (sum, item) { return sum + item.quantity; }, 0);
+      const subtotal = state.cart.reduce(function (sum, item) { return sum + (item.price * item.quantity); }, 0);
+      let discount = 0;
+      let shipping = subtotal >= 500 || subtotal === 0 ? 0 : 25;
+
+      if (state.meta && num(state.meta.discount) > 0) discount = num(state.meta.discount);
+      if (state.meta && state.meta.coupon === "FREEDEL") shipping = 0;
+
+      const total = Math.max(0, subtotal - discount + shipping);
+      state.totals = { items: items, subtotal: subtotal, discount: discount, shipping: shipping, total: total };
+    }
+
+    function renderSummary() {
+      computeTotals();
+      byId("sumItems").textContent = String(state.totals.items);
+      byId("sumSubtotal").textContent = money(state.totals.subtotal);
+      byId("sumDiscount").textContent = "- " + money(state.totals.discount);
+      byId("sumShipping").textContent = money(state.totals.shipping);
+      byId("sumTotal").textContent = money(state.totals.total);
+    }
+
+    function renderOrderList() {
+      const list = byId("orderList");
+      if (!state.cart.length) {
+        list.innerHTML = '<div class="empty">No checkout cart found. Return to cart and try again.</div>';
+        byId("placeOrderBtn").disabled = true;
+        renderSummary();
+        return;
+      }
+
+      list.innerHTML = state.cart.map(function (item) {
+        return `
+          <article class="order-item">
+            <img src="${item.image}" alt="${item.name}">
+            <div>
+              <div class="name">${item.name}</div>
+              <div class="meta">Seller: ${item.seller}</div>
+              <div class="meta">Qty: ${item.quantity}</div>
+            </div>
+            <strong>${money(item.price * item.quantity)}</strong>
+          </article>
+        `;
+      }).join("");
+      renderSummary();
+    }
+
+    function fillBuyer() {
+      const buyer = state.buyer || read("buyerInfoDraft", null) || read("currentUser", null) || {};
+      byId("buyerName").value = buyer.name || buyer.fullName || "";
+      byId("buyerPhone").value = buyer.phone || "";
+      byId("buyerEmail").value = buyer.email || "";
+      byId("buyerAddress").value = buyer.address || "";
+    }
+
+    function readBalance() {
+      const user = read("currentUser", null);
+      const value = user ? num(user.balance) : num(MMStorage.getItem("userBalance") || MMStorage.getItem("balance") || 0);
+      state.balance = value;
+      byId("walletInfo").textContent = "Wallet Balance: " + money(value);
+    }
+
+    function persistBalance(value) {
+      const next = Math.max(0, num(value));
+      const user = read("currentUser", null);
+      if (user) {
+        user.balance = next;
+        MMStorage.setItem("currentUser", JSON.stringify(user));
+        const users = read("users", []);
+        const updated = Array.isArray(users) ? users.map(function (u) {
+          if (u && u.email && user.email && u.email === user.email) return { ...u, balance: next };
+          return u;
+        }) : [];
+        MMStorage.setItem("users", JSON.stringify(updated));
+      }
+      MMStorage.setItem("userBalance", String(next));
+      MMStorage.setItem("balance", String(next));
+      state.balance = next;
+      byId("walletInfo").textContent = "Wallet Balance: " + money(next);
+    }
+
+    function showError(text) {
+      const err = byId("errMsg");
+      const ok = byId("okMsg");
+      ok.style.display = "none";
+      err.textContent = text;
+      err.style.display = "block";
+    }
+
+    function showSuccess(text) {
+      const err = byId("errMsg");
+      const ok = byId("okMsg");
+      err.style.display = "none";
+      ok.textContent = text;
+      ok.style.display = "block";
+    }
+
+    function stockIssueText(issues) {
+      const rows = Array.isArray(issues) ? issues : [];
+      if (!rows.length) return "Some cart items are no longer available.";
+      return rows.map(function (issue) { return issue.message; }).join(" ");
+    }
+
+    async function placeOrder() {
+      if (!state.cart.length) {
+        showError("No checkout cart found.");
+        return;
+      }
+
+      const buyer = {
+        name: byId("buyerName").value.trim(),
+        phone: byId("buyerPhone").value.trim(),
+        email: byId("buyerEmail").value.trim(),
+        address: byId("buyerAddress").value.trim()
+      };
+
+      if (!buyer.name || !buyer.phone || !buyer.email || !buyer.address) {
+        showError("Please complete delivery information.");
+        return;
+      }
+
+      if (!byId("termsCheck").checked) {
+        showError("Please confirm your order details.");
+        return;
+      }
+
+      const paymentMethod = byId("paymentMethod").value;
+      if (state.isSellerBuyer && paymentMethod === "wallet") {
+        showError("Seller accounts cannot use seller/subscription wallet funds to buy products. Use Cash on Delivery.");
+        return;
+      }
+      if (paymentMethod === "wallet" && state.balance < state.totals.total) {
+        showError("Insufficient wallet balance. Top up your account or use Cash on Delivery.");
+        return;
+      }
+
+      const nowIso = new Date().toISOString();
+      let orderId = "ORD-" + String(Date.now());
+
+      const order = {
+        id: orderId,
+        fullName: buyer.name,
+        address: buyer.address,
+        phone: buyer.phone,
+        email: buyer.email,
+        cart: state.cart,
+        subtotal: state.totals.subtotal,
+        discount: state.totals.discount,
+        shipping: state.totals.shipping,
+        total: state.totals.total,
+        status: "pending",
+        paymentMethod: paymentMethod,
+        coupon: state.meta ? (state.meta.coupon || null) : null,
+        placedAt: nowIso
+      };
+
+      if (window.SellerCore && typeof window.SellerCore.validateCartStock === "function") {
+        const stockCheck = window.SellerCore.validateCartStock(state.cart);
+        if (!stockCheck.ok) {
+          showError(stockIssueText(stockCheck.issues));
+          return;
+        }
+      }
+
+      if (window.SellerCore && typeof window.SellerCore.applyStockDeduction === "function") {
+        const stockResult = window.SellerCore.applyStockDeduction(state.cart);
+        if (!stockResult.ok) {
+          showError(stockIssueText(stockResult.issues));
+          return;
+        }
+      }
+
+      const apiEnabled = Boolean(window.MMApi && typeof window.MMApi.createOrder === "function" && window.MMApi.isEnabled());
+      let savedToApi = false;
+      let apiFallbackReason = "";
+      if (apiEnabled) {
+        try {
+          const saved = await window.MMApi.createOrder(order);
+          const serverId = String((saved && (saved.orderNumber || saved.orderId)) || "").trim();
+          if (serverId) {
+            orderId = serverId;
+            order.id = serverId;
+          }
+          savedToApi = true;
+        } catch (error) {
+          apiFallbackReason = (error && error.message ? error.message : "Unknown error");
+          console.warn("Order API unavailable, using local fallback:", apiFallbackReason);
+        }
+      }
+
+      if (paymentMethod === "wallet") {
+        persistBalance(state.balance - state.totals.total);
+      }
+
+      if (!savedToApi) {
+        const orders = read("buyerOrders", []);
+        orders.push(order);
+        MMStorage.setItem("buyerOrders", JSON.stringify(orders));
+      }
+
+      const purchases = read("purchases", []);
+      state.cart.forEach(function (item) {
+        purchases.push({
+          orderId: orderId,
+          productName: item.name,
+          sellerEmail: item.sellerEmail || "",
+          sellerName: item.seller,
+          seller: item.seller,
+          buyerEmail: buyer.email,
+          buyerName: buyer.name,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.price * item.quantity,
+          date: nowIso
+        });
+      });
+      MMStorage.setItem("purchases", JSON.stringify(purchases));
+
+      const sellerQueues = read("sellerOrderQueues", {});
+      state.cart.forEach(function (item) {
+        const key = item.seller || "Unknown Seller";
+        if (!sellerQueues[key]) sellerQueues[key] = [];
+        sellerQueues[key].push({
+          orderId: orderId,
+          buyer: buyer.name,
+          email: buyer.email,
+          phone: buyer.phone,
+          address: buyer.address,
+          item: item.name,
+          quantity: item.quantity,
+          amount: item.price * item.quantity,
+          status: "pending",
+          date: nowIso
+        });
+      });
+      MMStorage.setItem("sellerOrderQueues", JSON.stringify(sellerQueues));
+
+      creditSellers(orderId, buyer, nowIso, paymentMethod);
+
+      MMStorage.setItem("paymentStatus", "pending");
+      MMStorage.removeItem("checkoutCart");
+      MMStorage.removeItem("checkoutMeta");
+      MMStorage.setItem("cart", JSON.stringify([]));
+      MMStorage.setItem("buyerInfo", JSON.stringify(buyer));
+
+      const fallbackNote = (apiEnabled && !savedToApi)
+        ? " Server unavailable, order saved locally."
+        : "";
+      showSuccess("Order placed successfully. Order ID: " + orderId + "." + fallbackNote + " Redirecting to My Orders...");
+      byId("placeOrderBtn").disabled = true;
+      setTimeout(function () {
+        window.location.href = "buyers-orders.html";
+      }, 1800);
+    }
+
+    function init() {
+      state.cart = normalizeCart(read("checkoutCart", []));
+      state.buyer = read("buyerInfo", null);
+      state.meta = read("checkoutMeta", null);
+      state.isSellerBuyer = detectSellerBuyerAccount();
+
+      renderOrderList();
+      fillBuyer();
+      readBalance();
+
+      if (state.isSellerBuyer) {
+        const method = byId("paymentMethod");
+        Array.from(method.options).forEach(function (option) {
+          if (option.value === "wallet") option.disabled = true;
+        });
+        method.value = "cod";
+        byId("walletInfo").textContent = "Seller account detected: wallet/subscription funds are blocked for purchases.";
+      }
+
+      byId("placeOrderBtn").addEventListener("click", placeOrder);
+      byId("paymentMethod").addEventListener("change", function () {
+        if (this.value === "cod") {
+          byId("walletInfo").textContent = "Cash on Delivery selected. Wallet will not be charged now.";
+        } else {
+          readBalance();
+        }
+      });
+    }
+
+    window.addEventListener("load", function () {
+      const ready = window.MMStorage && window.MMStorage.ready;
+      if (ready && typeof ready.then === "function") {
+        ready.finally(init);
+        return;
+      }
+      init();
+    });
+  </script>
+  <script defer src="upgrade.js"></script>
+</body>
+</html>
+
+

@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>My Orders - MatrixMarket</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="upgrade.css">
+    <script src="firebase-online-storage.js"></script>
+    <style>
+        body { margin:0; font-family:"Poppins",sans-serif; background:#0f172a; color:#fff; }
+        header { background:rgba(0,0,0,.72); display:flex; justify-content:space-between; align-items:center; padding:14px 18px; position:sticky; top:0; z-index:1000; }
+        .logo { font-size:1.4rem; font-weight:800; color:#06b6d4; }
+        nav { display:flex; gap:12px; flex-wrap:wrap; }
+        nav a { color:#fff; text-decoration:none; font-weight:600; }
+
+        .shell { width:min(1180px,100% - 18px); margin:16px auto 26px; display:grid; gap:12px; }
+        .titlebar { background:rgba(255,255,255,.06); border:1px solid rgba(148,163,184,.2); border-radius:14px; padding:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+        .titlebar h1 { margin:0; color:#67e8f9; font-size:1.25rem; }
+        .actions { display:flex; gap:8px; flex-wrap:wrap; }
+        .btn { border:none; border-radius:10px; padding:9px 12px; font-weight:700; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(135deg,#06b6d4,#4f46e5); }
+        .btn.alt { background:rgba(30,41,59,.78); border:1px solid rgba(148,163,184,.3); }
+        .btn.warn { background:rgba(245,158,11,.22); border:1px solid rgba(245,158,11,.42); color:#fde68a; }
+        .btn.danger { background:rgba(239,68,68,.2); border:1px solid rgba(239,68,68,.42); color:#fecaca; }
+
+        .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; }
+        .kpi { background:rgba(255,255,255,.06); border:1px solid rgba(148,163,184,.2); border-radius:12px; padding:10px; }
+        .kpi .label { color:#94a3b8; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em; }
+        .kpi .value { margin-top:.25rem; font-size:1.35rem; font-weight:800; color:#e0f2fe; }
+
+        .card { background:rgba(255,255,255,.06); border:1px solid rgba(148,163,184,.2); border-radius:14px; padding:12px; }
+        .toolbar { display:grid; grid-template-columns:1.2fr .9fr .9fr .9fr .9fr auto; gap:8px; align-items:center; }
+        input,select,textarea { width:100%; border:1px solid rgba(148,163,184,.25); background:rgba(15,23,42,.72); color:#e2e8f0; border-radius:10px; padding:9px; font:inherit; }
+
+        .orders { display:grid; gap:10px; }
+        .order { border:1px solid rgba(148,163,184,.22); background:rgba(2,6,23,.55); border-radius:12px; padding:10px; display:grid; gap:8px; }
+        .order-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap; }
+        .order-id { font-weight:800; color:#e0f2fe; }
+        .order-date { color:#94a3b8; font-size:.82rem; }
+        .badge { display:inline-flex; border-radius:999px; padding:.18rem .5rem; font-size:.72rem; font-weight:700; border:1px solid transparent; }
+        .badge.pending { color:#fde68a; border-color:rgba(245,158,11,.45); background:rgba(245,158,11,.18); }
+        .badge.in-transit,.badge.processing,.badge.shipped,.badge.out-for-delivery { color:#fcd34d; border-color:rgba(245,158,11,.45); background:rgba(245,158,11,.18); }
+        .badge.approved,.badge.completed,.badge.delivered { color:#86efac; border-color:rgba(34,197,94,.45); background:rgba(34,197,94,.16); }
+        .badge.declined,.badge.cancelled { color:#fca5a5; border-color:rgba(239,68,68,.45); background:rgba(239,68,68,.16); }
+        .badge.info { color:#93c5fd; border-color:rgba(59,130,246,.4); background:rgba(59,130,246,.14); }
+
+        .meta-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+        .meta-box { border:1px solid rgba(148,163,184,.2); border-radius:10px; background:rgba(15,23,42,.58); padding:7px; }
+        .meta-box .k { color:#94a3b8; font-size:.72rem; text-transform:uppercase; }
+        .meta-box .v { margin-top:2px; font-size:.88rem; color:#e2e8f0; }
+
+        .items { display:grid; gap:6px; }
+        .item { display:grid; grid-template-columns:1fr auto; gap:8px; border:1px solid rgba(148,163,184,.2); border-radius:9px; background:rgba(15,23,42,.5); padding:7px; }
+        .item small { color:#94a3b8; display:block; }
+
+        .timeline { display:flex; gap:6px; flex-wrap:wrap; }
+        .step { border:1px solid rgba(148,163,184,.3); color:#94a3b8; border-radius:999px; padding:.2rem .45rem; font-size:.73rem; }
+        .step.on { color:#86efac; border-color:rgba(34,197,94,.45); background:rgba(34,197,94,.14); }
+        .step.off { color:#cbd5e1; }
+        .step.bad { color:#fecaca; border-color:rgba(239,68,68,.45); background:rgba(239,68,68,.14); }
+
+        .order-actions { display:flex; gap:6px; flex-wrap:wrap; }
+        .empty { text-align:center; color:#94a3b8; border:1px dashed rgba(148,163,184,.42); border-radius:10px; padding:16px; }
+        .notice { color:#cbd5e1; border:1px solid rgba(59,130,246,.35); background:rgba(59,130,246,.12); border-radius:10px; padding:10px; }
+        .notice.warn { color:#fde68a; border-color:rgba(245,158,11,.45); background:rgba(245,158,11,.14); }
+
+        .modal { position:fixed; inset:0; background:rgba(2,6,23,.74); display:none; align-items:center; justify-content:center; padding:14px; z-index:1500; }
+        .modal.open { display:flex; }
+        .modal-card { width:min(760px,100%); max-height:90vh; overflow:auto; background:#0b1220; border:1px solid rgba(148,163,184,.3); border-radius:14px; padding:14px; }
+        .invoice-head { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+        .invoice-head h3 { margin:0; color:#67e8f9; }
+
+        @media (max-width:1040px) { .kpi-grid,.meta-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .toolbar { grid-template-columns:1fr 1fr; } }
+        @media (max-width:680px) { .kpi-grid,.meta-grid,.toolbar { grid-template-columns:1fr; } .order-actions .btn { flex:1 1 140px; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">MatrixMarket</div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="shop.html">Shop</a>
+            <a href="cart.html">Cart</a>
+            <a href="chat.html">Chat</a>
+            <a href="agent-page.html">Agent Page</a>
+        </nav>
+    </header>
+
+    <main class="shell">
+        <section class="titlebar">
+            <h1>My Orders</h1>
+            <div class="actions">
+                <a class="btn alt" href="shop.html">Continue Shopping</a>
+                <a class="btn alt" href="agent-page.html">Contact Agent</a>
+                <button class="btn" id="exportOrdersBtn" type="button">Export CSV</button>
+            </div>
+        </section>
+
+        <section class="kpi-grid">
+            <article class="kpi"><div class="label">Orders</div><div class="value" id="kpiOrders">0</div></article>
+            <article class="kpi"><div class="label">Active</div><div class="value" id="kpiActive">0</div></article>
+            <article class="kpi"><div class="label">Delivered</div><div class="value" id="kpiDelivered">0</div></article>
+            <article class="kpi"><div class="label">Cancelled</div><div class="value" id="kpiCancelled">0</div></article>
+            <article class="kpi"><div class="label">Total Spend</div><div class="value" id="kpiSpend">0.00 GMD</div></article>
+        </section>
+
+        <section class="card">
+            <div class="toolbar">
+                <input id="searchInput" type="text" placeholder="Search order, item, seller, status">
+                <select id="statusFilter"><option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="in-transit">In Transit</option><option value="completed">Completed</option><option value="delivered">Delivered</option><option value="declined">Declined</option><option value="cancelled">Cancelled</option></select>
+                <select id="paymentFilter"><option value="">All Payment Methods</option><option value="wallet">Wallet</option><option value="cod">Cash on Delivery</option></select>
+                <select id="dateFilter"><option value="all">All Dates</option><option value="7">Last 7 Days</option><option value="30">Last 30 Days</option><option value="90">Last 90 Days</option></select>
+                <select id="sortFilter"><option value="newest">Sort: Newest</option><option value="oldest">Sort: Oldest</option><option value="amountHigh">Sort: Amount High</option><option value="amountLow">Sort: Amount Low</option></select>
+                <div class="actions"><button class="btn alt" id="resetBtn" type="button">Reset</button></div>
+            </div>
+        </section>
+
+        <section class="card" id="ownerNotice" style="display:none;"></section>
+        <section class="card" id="checkoutDraftCard" style="display:none;"></section>
+
+        <section class="orders" id="orderList"></section>
+    </main>
+
+    <div class="modal" id="invoiceModal">
+        <div class="modal-card">
+            <div class="invoice-head">
+                <h3>Order Invoice</h3>
+                <div class="actions">
+                    <button class="btn alt" id="printInvoiceBtn" type="button">Print</button>
+                    <button class="btn danger" id="closeInvoiceBtn" type="button">Close</button>
+                </div>
+            </div>
+            <div id="invoiceBody" style="margin-top:10px;"></div>
+        </div>
+    </div>
+
+    <script src="api-client.js"></script>
+    <script>
+        const state = { currentUser: null, orders: [], filtered: [], ownerMode: "strict", checkoutDraft: null, orderSource: "local" };
+
+        function byId(id) { return document.getElementById(id); }
+        function num(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }
+        function str(v) { return String(v == null ? "" : v).trim(); }
+        function clean(v) { return str(v).toLowerCase(); }
+        function money(v) { return num(v).toFixed(2) + " GMD"; }
+        function nowIso() { return new Date().toISOString(); }
+        function read(key, fallback) { try { const d = JSON.parse(MMStorage.getItem(key) || "null"); return d ?? fallback; } catch (_) { return fallback; } }
+        function write(key, value) { MMStorage.setItem(key, JSON.stringify(value)); }
+        function esc(value) { return String(value == null ? "" : value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;"); }
+        function viewerEmail() {
+            const current = read("currentUser", null) || {};
+            const buyer = read("buyerInfo", null) || {};
+            return str(current.email || buyer.email || "");
+        }
+        function collectViewerIdentity() {
+            const current = read("currentUser", null) || {};
+            const buyerInfo = read("buyerInfo", null) || {};
+            const buyerDraft = read("buyerInfoDraft", null) || {};
+            function unique(values) {
+                return Array.from(new Set(values.map(clean).filter(Boolean)));
+            }
+            return {
+                emails: unique([current.email, buyerInfo.email, buyerDraft.email]),
+                phones: unique([current.phone, buyerInfo.phone, buyerDraft.phone]),
+                names: unique([current.fullName, current.name, buyerInfo.fullName, buyerInfo.name, buyerDraft.fullName, buyerDraft.name])
+            };
+        }
+
+        function loadCheckoutDraft() {
+            const cart = normalizeCart(read("checkoutCart", []));
+            if (!cart.length) return null;
+            const meta = read("checkoutMeta", null) || {};
+            const buyer = read("buyerInfoDraft", null) || read("buyerInfo", null) || {};
+            const subtotal = cart.reduce(function (sum, item) { return sum + (item.price * item.quantity); }, 0);
+            const discount = num(meta.discount || 0);
+            const shipping = (typeof meta.shipping !== "undefined") ? num(meta.shipping) : (subtotal >= 500 || subtotal === 0 ? 0 : 25);
+            const total = Math.max(0, subtotal - discount + shipping);
+            return {
+                items: cart,
+                buyerName: str(buyer.name || buyer.fullName || ""),
+                buyerEmail: str(buyer.email || ""),
+                buyerPhone: str(buyer.phone || ""),
+                subtotal: subtotal,
+                discount: discount,
+                shipping: shipping,
+                total: total
+            };
+        }
+
+        function normalizePaymentMethod(method) {
+            const raw = clean(method);
+            if (!raw) return "wallet";
+            const m = raw.replace(/[\s_-]+/g, "");
+            if (m === "wallet") return "wallet";
+            if (m === "cod" || m === "cashondelivery" || m === "cash") return "cod";
+            return raw;
+        }
+
+        function normalizeCart(cart) {
+            return (Array.isArray(cart) ? cart : []).map(function (item) {
+                return {
+                    name: str(item.name || "Product"),
+                    seller: str(item.seller || item.sellerName || "Unknown Seller"),
+                    sellerEmail: str(item.sellerEmail || ""),
+                    price: num(item.price || 0),
+                    quantity: Math.max(1, Math.floor(num(item.quantity || 1))),
+                    image: str(item.image || "https://via.placeholder.com/80"),
+                    category: str(item.category || "general")
+                };
+            });
+        }
+
+        function normalizeStatus(status) {
+            const s = clean(status || "pending");
+            const key = s.replace(/[\s_]+/g, "-");
+            if (["approved", "success", "accepted"].includes(key)) return "approved";
+            if (["processing", "in-transit", "shipped", "out-for-delivery"].includes(key)) return "in-transit";
+            if (["completed", "delivered"].includes(key)) return key;
+            if (["declined", "rejected", "failed"].includes(s)) return "declined";
+            if (["cancelled", "canceled"].includes(s)) return "cancelled";
+            if (key === "pending" || key === "new") return "pending";
+            return "info";
+        }
+
+        function badge(status) {
+            const s = normalizeStatus(status);
+            return '<span class="badge ' + s + '">' + esc(str(status || s)) + '</span>';
+        }
+
+        function normalizeSellers(raw) {
+            if (Array.isArray(raw)) return raw.slice();
+            if (raw && typeof raw === "object") return Object.keys(raw).map(function (name) { return { name: name, ...(raw[name] || {}) }; });
+            return [];
+        }
+
+        function buildQueueSummaryByOrderId() {
+            const queues = read("sellerOrderQueues", {});
+            const summary = {};
+            if (!queues || typeof queues !== "object") return summary;
+            Object.keys(queues).forEach(function (key) {
+                const items = Array.isArray(queues[key]) ? queues[key] : [];
+                items.forEach(function (item) {
+                    const orderId = str(item.orderId || "");
+                    if (!orderId) return;
+                    const ts = Date.parse(item.updatedAt || item.date || item.createdAt || "");
+                    const prev = summary[orderId];
+                    if (prev && Number.isFinite(prev.ts) && Number.isFinite(ts) && prev.ts > ts) return;
+                    summary[orderId] = {
+                        status: normalizeStatus(item.status || "pending"),
+                        address: str(item.address || ""),
+                        phone: str(item.phone || ""),
+                        buyerEmail: str(item.email || item.buyerEmail || ""),
+                        buyerName: str(item.buyer || item.buyerName || ""),
+                        ts: Number.isFinite(ts) ? ts : 0
+                    };
+                });
+            });
+            return summary;
+        }
+
+        function rebuildOrdersFromPurchases() {
+            const purchases = read("purchases", []);
+            if (!Array.isArray(purchases) || !purchases.length) return [];
+
+            const queueByOrder = buildQueueSummaryByOrderId();
+            const grouped = {};
+
+            purchases.forEach(function (row, index) {
+                const orderId = str(row.orderId || ("LEGACY-" + index));
+                if (!grouped[orderId]) {
+                    grouped[orderId] = {
+                        sourceIndex: -1,
+                        id: orderId,
+                        placedAt: row.date || row.createdAt || nowIso(),
+                        placedTs: Date.parse(row.date || row.createdAt || ""),
+                        status: "pending",
+                        paymentMethod: "wallet",
+                        total: 0,
+                        subtotal: 0,
+                        discount: 0,
+                        shipping: 0,
+                        address: "",
+                        phone: "",
+                        email: "",
+                        fullName: "",
+                        cart: [],
+                        refunded: false,
+                        remote: false
+                    };
+                }
+
+                const order = grouped[orderId];
+                const qty = Math.max(1, Math.floor(num(row.quantity || 1)));
+                const lineTotal = num(row.total || (num(row.price) * qty));
+                const unitPrice = qty > 0 ? (lineTotal / qty) : num(row.price);
+
+                order.cart.push({
+                    name: str(row.productName || row.item || "Product"),
+                    seller: str(row.seller || row.sellerName || "Unknown Seller"),
+                    sellerEmail: str(row.sellerEmail || ""),
+                    price: num(unitPrice),
+                    quantity: qty,
+                    image: str(row.image || "https://via.placeholder.com/80"),
+                    category: str(row.category || "general")
+                });
+
+                order.total += lineTotal;
+                order.subtotal = order.total;
+                if (!order.email) order.email = str(row.buyerEmail || "");
+                if (!order.fullName) order.fullName = str(row.buyerName || row.buyer || "");
+
+                const rowTs = Date.parse(row.date || row.createdAt || "");
+                if (Number.isFinite(rowTs) && (!Number.isFinite(order.placedTs) || rowTs < order.placedTs)) {
+                    order.placedTs = rowTs;
+                    order.placedAt = new Date(rowTs).toISOString();
+                }
+            });
+
+            return Object.keys(grouped).map(function (orderId) {
+                const order = grouped[orderId];
+                const fromQueue = queueByOrder[orderId];
+                if (fromQueue) {
+                    order.status = normalizeStatus(fromQueue.status || order.status);
+                    order.address = order.address || fromQueue.address;
+                    order.phone = order.phone || fromQueue.phone;
+                    order.email = order.email || fromQueue.buyerEmail;
+                    order.fullName = order.fullName || fromQueue.buyerName;
+                }
+                order.paymentMethod = normalizePaymentMethod(order.paymentMethod);
+                if (!Number.isFinite(order.placedTs)) order.placedTs = 0;
+                return order;
+            });
+        }
+
+        function getCurrentBuyerOrdersLocal() {
+            const all = read("buyerOrders", []);
+            const rows = Array.isArray(all) ? all : [];
+            const identity = collectViewerIdentity();
+            const normalized = rows.map(function (order, index) {
+                const parsed = Date.parse(order.placedAt || order.createdAt || "");
+                return {
+                    sourceIndex: index,
+                    id: str(order.id || ("ORD-" + index)),
+                    placedAt: order.placedAt || order.createdAt || nowIso(),
+                    placedTs: Number.isFinite(parsed) ? parsed : 0,
+                    status: normalizeStatus(order.status || "pending"),
+                    paymentMethod: normalizePaymentMethod(order.paymentMethod || "wallet"),
+                    total: num(order.total || 0),
+                    subtotal: num(order.subtotal || 0),
+                    discount: num(order.discount || 0),
+                    shipping: num(order.shipping || 0),
+                    address: str(order.address || ""),
+                    phone: str(order.phone || ""),
+                    email: str(order.email || ""),
+                    fullName: str(order.fullName || order.name || ""),
+                    cart: normalizeCart(order.cart),
+                    refunded: Boolean(order.refundProcessed),
+                    remote: false
+                };
+            });
+            const stitched = normalized.slice();
+            const existingIds = new Set(normalized.map(function (order) { return clean(order.id); }).filter(Boolean));
+            rebuildOrdersFromPurchases().forEach(function (order) {
+                if (!existingIds.has(clean(order.id))) stitched.push(order);
+            });
+
+            const hasIdentity = identity.emails.length || identity.phones.length || identity.names.length;
+            if (!hasIdentity) {
+                state.ownerMode = "all";
+                return stitched;
+            }
+
+            const ownedByEmail = stitched.filter(function (order) {
+                return identity.emails.includes(clean(order.email));
+            });
+            if (ownedByEmail.length) {
+                state.ownerMode = "email";
+                return ownedByEmail;
+            }
+
+            const ownedByPhone = stitched.filter(function (order) {
+                const phone = clean(order.phone);
+                return !clean(order.email) && phone && identity.phones.includes(phone);
+            });
+            if (ownedByPhone.length) {
+                state.ownerMode = "phone";
+                return ownedByPhone;
+            }
+
+            const ownedByName = stitched.filter(function (order) {
+                const name = clean(order.fullName);
+                return !clean(order.email) && !clean(order.phone) && name && identity.names.includes(name);
+            });
+            if (ownedByName.length) {
+                state.ownerMode = "name";
+                return ownedByName;
+            }
+
+            // Fallback for legacy rows with missing email ownership.
+            const legacy = stitched.filter(function (order) { return !clean(order.email); });
+            if (legacy.length) {
+                state.ownerMode = "legacy";
+                return legacy;
+            }
+
+            // Final fallback so buyers still see local browser orders.
+            state.ownerMode = "all";
+            return stitched;
+        }
+
+        async function getCurrentBuyerOrdersFromApi() {
+            const apiEnabled = Boolean(window.MMApi && typeof window.MMApi.getOrders === "function" && window.MMApi.isEnabled());
+            if (!apiEnabled) return null;
+
+            const identity = collectViewerIdentity();
+            const filterEmail = identity.emails[0] || "";
+            const filterPhone = identity.phones[0] || "";
+            if (!filterEmail && !filterPhone) return null;
+
+            const response = await window.MMApi.getOrders({
+                buyerEmail: filterEmail || undefined,
+                buyerPhone: filterPhone || undefined,
+                limit: 200
+            });
+            const rows = (response && Array.isArray(response.orders)) ? response.orders : [];
+            state.ownerMode = filterEmail ? "email" : "phone";
+            return rows.map(function (order) {
+                const parsed = Date.parse(order.placedAt || order.createdAt || "");
+                return {
+                    sourceIndex: -1,
+                    id: str(order.id || order.orderNumber || ("ORD-" + Date.now())),
+                    placedAt: order.placedAt || order.createdAt || nowIso(),
+                    placedTs: Number.isFinite(parsed) ? parsed : 0,
+                    status: normalizeStatus(order.status || "pending"),
+                    paymentMethod: normalizePaymentMethod(order.paymentMethod || "wallet"),
+                    total: num(order.total || 0),
+                    subtotal: num(order.subtotal || 0),
+                    discount: num(order.discount || 0),
+                    shipping: num(order.shipping || 0),
+                    address: str(order.address || order.buyerAddress || ""),
+                    phone: str(order.phone || order.buyerPhone || ""),
+                    email: str(order.email || order.buyerEmail || ""),
+                    fullName: str(order.fullName || order.buyerName || order.name || ""),
+                    cart: normalizeCart(order.cart || order.items),
+                    refunded: Boolean(order.refundProcessed),
+                    remote: true
+                };
+            });
+        }
+
+        function timelineFor(status) {
+            const s = clean(status);
+            if (s === "declined" || s === "cancelled") return '<span class="step on">Placed</span><span class="step bad">' + esc(s) + '</span>';
+            const steps = ["pending", "approved", "in-transit", "delivered"];
+            const labels = { pending: "Placed", approved: "Approved", "in-transit": "In Transit", delivered: "Delivered" };
+            const idx = steps.indexOf(s === "completed" ? "delivered" : s);
+            return steps.map(function (key, i) { return '<span class="step ' + (i <= idx ? "on" : "off") + '">' + labels[key] + '</span>'; }).join("");
+        }
+
+        function updateKpis() {
+            const all = state.orders;
+            byId("kpiOrders").textContent = String(all.length);
+            byId("kpiActive").textContent = String(all.filter(function (o) { return ["pending", "approved", "in-transit"].includes(o.status); }).length);
+            byId("kpiDelivered").textContent = String(all.filter(function (o) { return ["delivered", "completed"].includes(o.status); }).length);
+            byId("kpiCancelled").textContent = String(all.filter(function (o) { return o.status === "cancelled"; }).length);
+            byId("kpiSpend").textContent = money(all.reduce(function (sum, o) { return ["declined", "cancelled"].includes(o.status) ? sum : (sum + o.total); }, 0));
+        }
+
+        function renderOwnerNotice() {
+            const box = byId("ownerNotice");
+            if (!box) return;
+            let text = "";
+            let cls = "notice";
+            if (state.ownerMode === "legacy") {
+                text = "Showing legacy local orders (orders without buyer email).";
+                cls = "notice warn";
+            } else if (state.ownerMode === "all") {
+                text = "Showing all local browser orders. Sign in with the buyer email used at checkout for stricter filtering.";
+                cls = "notice warn";
+            }
+
+            if (!text) {
+                box.style.display = "none";
+                box.innerHTML = "";
+                return;
+            }
+            box.style.display = "block";
+            box.className = "card " + cls;
+            box.textContent = text;
+        }
+
+        function renderCheckoutDraft() {
+            const box = byId("checkoutDraftCard");
+            if (!box) return;
+            if (!state.checkoutDraft) {
+                box.style.display = "none";
+                box.innerHTML = "";
+                return;
+            }
+            const d = state.checkoutDraft;
+            box.style.display = "block";
+            box.className = "card notice warn";
+            box.innerHTML = "<strong>Checkout Draft Found:</strong> " +
+                d.items.length + " item(s), total " + esc(money(d.total)) +
+                (d.buyerEmail ? (" | Buyer: " + esc(d.buyerEmail)) : "") +
+                " | Complete order in checkout to move it into My Orders.";
+        }
+
+        function applyFilters() {
+            const q = clean(byId("searchInput").value);
+            const status = clean(byId("statusFilter").value);
+            const payment = clean(byId("paymentFilter").value);
+            const dateDays = byId("dateFilter").value;
+            const sort = byId("sortFilter").value;
+            const now = Date.now();
+
+            state.filtered = state.orders.filter(function (order) {
+                const hayItems = order.cart.map(function (item) { return [item.name, item.seller].join(" "); }).join(" ").toLowerCase();
+                const hay = [order.id, order.status, order.paymentMethod, order.address, order.phone, order.fullName, order.email, hayItems].join(" ").toLowerCase();
+                const statusOk = !status || clean(order.status) === status;
+                const paymentOk = !payment || clean(order.paymentMethod) === payment;
+                let dateOk = true;
+                if (dateDays !== "all") {
+                    const placedTs = Number.isFinite(order.placedTs) ? order.placedTs : Date.parse(order.placedAt || "");
+                    dateOk = Number.isFinite(placedTs) ? ((now - placedTs) <= (Number(dateDays) * 86400000)) : true;
+                }
+                return (!q || hay.includes(q)) && statusOk && paymentOk && dateOk;
+            }).sort(function (a, b) {
+                const aTs = Number.isFinite(a.placedTs) ? a.placedTs : 0;
+                const bTs = Number.isFinite(b.placedTs) ? b.placedTs : 0;
+                if (sort === "oldest") return aTs - bTs;
+                if (sort === "amountHigh") return b.total - a.total || bTs - aTs;
+                if (sort === "amountLow") return a.total - b.total || bTs - aTs;
+                return bTs - aTs;
+            });
+        }
+
+        function canCancel(order) {
+            const cancellableStatus = ["pending", "approved"].includes(clean(order.status));
+            if (!cancellableStatus) return false;
+            return Boolean(order.remote || (Number.isInteger(order.sourceIndex) && order.sourceIndex >= 0));
+        }
+
+        function renderOrders() {
+            const box = byId("orderList");
+            if (!state.filtered.length) { box.innerHTML = '<div class="card empty">No orders found with current filters.</div>'; return; }
+            box.innerHTML = state.filtered.map(function (order, idx) {
+                const itemRows = order.cart.map(function (item) {
+                    return '<div class="item"><div><strong>' + esc(item.name) + '</strong><small>Seller: ' + esc(item.seller) + ' | Qty: ' + item.quantity + '</small></div><div>' + esc(money(item.price * item.quantity)) + '</div></div>';
+                }).join("");
+                const paymentText = order.refunded ? (order.paymentMethod.toUpperCase() + " (REFUNDED)") : order.paymentMethod.toUpperCase();
+                return '<article class="order" data-order-index="' + idx + '">' +
+                    '<div class="order-head"><div><div class="order-id">Order ' + esc(order.id) + '</div><div class="order-date">Placed: ' + esc(new Date(order.placedAt).toLocaleString()) + '</div></div><div>' + badge(order.status) + '</div></div>' +
+                    '<div class="meta-grid"><div class="meta-box"><div class="k">Total</div><div class="v">' + esc(money(order.total)) + '</div></div><div class="meta-box"><div class="k">Payment</div><div class="v">' + esc(paymentText) + '</div></div><div class="meta-box"><div class="k">Delivery Phone</div><div class="v">' + esc(order.phone || "-") + '</div></div><div class="meta-box"><div class="k">Delivery Address</div><div class="v">' + esc(order.address || "-") + '</div></div></div>' +
+                    '<div class="items">' + itemRows + '</div>' +
+                    '<div class="timeline">' + timelineFor(order.status) + '</div>' +
+                    '<div class="order-actions"><button class="btn alt" data-action="copy" data-id="' + idx + '" type="button">Copy ID</button><button class="btn alt" data-action="invoice" data-id="' + idx + '" type="button">Invoice</button><button class="btn alt" data-action="reorder" data-id="' + idx + '" type="button">Reorder</button><button class="btn alt" data-action="chat" data-id="' + idx + '" type="button">Chat Seller</button><button class="btn alt" data-action="rate" data-id="' + idx + '" type="button">Rate Seller</button><button class="btn warn" data-action="complain" data-id="' + idx + '" type="button">Complain</button>' + (canCancel(order) ? '<button class="btn danger" data-action="cancel" data-id="' + idx + '" type="button">Cancel</button>' : '') + '</div>' +
+                    '</article>';
+            }).join("");
+        }
+        function getOrderByFilteredIndex(index) {
+            const i = Number(index);
+            return Number.isInteger(i) ? state.filtered[i] : null;
+        }
+
+        function mergeCartItems(existingCart, items) {
+            const cart = Array.isArray(existingCart) ? existingCart : [];
+            items.forEach(function (item) {
+                const key = clean(item.name) + "|" + clean(item.seller);
+                const idx = cart.findIndex(function (x) { return clean(x.name) + "|" + clean(x.seller) === key; });
+                if (idx >= 0) cart[idx].quantity = Math.max(1, Math.floor(num(cart[idx].quantity || 1))) + Math.max(1, Math.floor(num(item.quantity || 1)));
+                else cart.push({ name: item.name, price: num(item.price), image: item.image, seller: item.seller, sellerEmail: item.sellerEmail || "", category: item.category || "general", quantity: Math.max(1, Math.floor(num(item.quantity || 1))) });
+            });
+            return cart;
+        }
+
+        function chooseSeller(order) {
+            const map = {};
+            order.cart.forEach(function (item) {
+                const key = clean(item.sellerEmail || item.seller);
+                if (!key) return;
+                if (!map[key]) map[key] = { name: str(item.seller || item.sellerEmail), email: str(item.sellerEmail || "") };
+            });
+            const sellers = Object.keys(map).map(function (k) { return map[k]; });
+            if (!sellers.length) return null;
+            if (sellers.length === 1) return sellers[0];
+
+            const promptText = sellers.map(function (s, i) { return (i + 1) + ". " + s.name + (s.email ? " (" + s.email + ")" : ""); }).join("\n");
+            const pick = prompt("Choose seller number:\n" + promptText);
+            const idx = Number(pick) - 1;
+            if (!Number.isInteger(idx) || idx < 0 || idx >= sellers.length) return null;
+            return sellers[idx];
+        }
+
+        function pushSellerRating(order, seller) {
+            const ratingRaw = prompt("Rate seller from 1 to 5:");
+            const rating = Number(ratingRaw);
+            if (!Number.isFinite(rating) || rating < 1 || rating > 5) { alert("Rating must be between 1 and 5."); return; }
+            const note = prompt("Optional rating note:") || "";
+            const rows = read("sellerRatings", []);
+            rows.unshift({
+                id: "RAT-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
+                seller: seller.name,
+                sellerName: seller.name,
+                sellerEmail: seller.email,
+                buyerName: str(order.fullName || (state.currentUser && state.currentUser.fullName) || "Buyer"),
+                buyerEmail: str(order.email || (state.currentUser && state.currentUser.email) || ""),
+                rating: Math.round(rating),
+                note: str(note),
+                status: "new",
+                createdAt: nowIso(),
+                date: nowIso()
+            });
+            write("sellerRatings", rows);
+            alert("Rating submitted.");
+        }
+
+        function pushSellerComplaint(order, seller) {
+            const message = prompt("Enter your complaint about this seller:");
+            if (!message || !str(message)) return;
+            const rows = read("sellerComplaints", []);
+            rows.unshift({
+                id: "CMP-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
+                seller: seller.name,
+                sellerName: seller.name,
+                sellerEmail: seller.email,
+                buyerName: str(order.fullName || (state.currentUser && state.currentUser.fullName) || "Buyer"),
+                buyerEmail: str(order.email || (state.currentUser && state.currentUser.email) || ""),
+                text: str(message),
+                status: "new",
+                createdAt: nowIso(),
+                date: nowIso()
+            });
+            write("sellerComplaints", rows);
+            alert("Complaint submitted to admin.");
+        }
+
+        function updateUserBalance(email, amountDelta) {
+            const target = clean(email);
+            if (!target) return;
+            const users = read("users", []);
+            if (Array.isArray(users)) {
+                users.forEach(function (u) { if (clean(u.email) === target) u.balance = num(u.balance) + num(amountDelta); });
+                write("users", users);
+            }
+            const currentUser = read("currentUser", null);
+            if (currentUser && clean(currentUser.email) === target) {
+                currentUser.balance = num(currentUser.balance) + num(amountDelta);
+                write("currentUser", currentUser);
+                MMStorage.setItem("balance", String(currentUser.balance));
+                MMStorage.setItem("userBalance", String(currentUser.balance));
+            }
+        }
+
+        function reverseSellerCredits(orderId) {
+            const payouts = read("sellerPayouts", []);
+            const sellers = normalizeSellers(read("sellers", []));
+            if (!Array.isArray(payouts) || !sellers.length) return;
+
+            payouts.forEach(function (payout) {
+                if (str(payout.orderId) !== str(orderId) || clean(payout.status) !== "credited") return;
+                const sellerIdx = sellers.findIndex(function (seller) { return clean(seller.email) === clean(payout.sellerEmail) || clean(seller.store || seller.name) === clean(payout.sellerName); });
+                if (sellerIdx >= 0) sellers[sellerIdx].balance = Math.max(0, num(sellers[sellerIdx].balance) - num(payout.amount));
+                payout.status = "reversed";
+                payout.reversedAt = nowIso();
+            });
+
+            write("sellerPayouts", payouts);
+            write("sellers", sellers);
+        }
+
+        async function cancelOrder(order) {
+            if (!canCancel(order)) { alert("This order can no longer be cancelled."); return; }
+            if (!confirm("Cancel order " + order.id + "?")) return;
+            if (order.remote && window.MMApi && typeof window.MMApi.cancelOrder === "function" && window.MMApi.isEnabled()) {
+                try {
+                    await window.MMApi.cancelOrder(order.id);
+                    alert("Order cancelled successfully.");
+                    await reload();
+                    return;
+                } catch (error) {
+                    alert("Could not cancel order on server: " + (error && error.message ? error.message : "Unknown error"));
+                    return;
+                }
+            }
+
+            const orders = read("buyerOrders", []);
+            const row = orders[order.sourceIndex];
+            if (!row) return;
+
+            row.status = "cancelled";
+            row.updatedAt = nowIso();
+            if (clean(row.paymentMethod) === "wallet" && !row.refundProcessed) {
+                updateUserBalance(row.email || viewerEmail(), num(row.total));
+                row.refundProcessed = true;
+            }
+            reverseSellerCredits(row.id);
+            write("buyerOrders", orders);
+
+            const queues = read("sellerOrderQueues", {});
+            Object.keys(queues || {}).forEach(function (key) {
+                const items = Array.isArray(queues[key]) ? queues[key] : [];
+                items.forEach(function (item) {
+                    if (str(item.orderId) === str(row.id)) {
+                        item.status = "cancelled";
+                        item.updatedAt = nowIso();
+                    }
+                });
+            });
+            write("sellerOrderQueues", queues);
+
+            const purchases = read("purchases", []);
+            if (Array.isArray(purchases)) {
+                purchases.forEach(function (p) { if (str(p.orderId) === str(row.id)) p.status = "cancelled"; });
+                write("purchases", purchases);
+            }
+
+            alert("Order cancelled successfully.");
+            await reload();
+        }
+
+        function showInvoice(order) {
+            const body = byId("invoiceBody");
+            const items = order.cart.map(function (item) {
+                return '<tr><td style="padding:6px;border-bottom:1px solid rgba(148,163,184,.2);">' + esc(item.name) + '</td><td style="padding:6px;border-bottom:1px solid rgba(148,163,184,.2);">' + esc(item.seller) + '</td><td style="padding:6px;border-bottom:1px solid rgba(148,163,184,.2);">' + item.quantity + '</td><td style="padding:6px;border-bottom:1px solid rgba(148,163,184,.2);">' + esc(money(item.price * item.quantity)) + '</td></tr>';
+            }).join("");
+
+            body.innerHTML = '<div style="display:grid;gap:8px;">' +
+                '<div><strong>Order ID:</strong> ' + esc(order.id) + '</div>' +
+                '<div><strong>Date:</strong> ' + esc(new Date(order.placedAt).toLocaleString()) + '</div>' +
+                '<div><strong>Buyer:</strong> ' + esc(order.fullName || "-") + ' (' + esc(order.email || "-") + ')</div>' +
+                '<div><strong>Delivery:</strong> ' + esc(order.address || "-") + ' | ' + esc(order.phone || "-") + '</div>' +
+                '<table style="width:100%; border-collapse:collapse; margin-top:6px;"><thead><tr><th style="text-align:left;padding:6px;border-bottom:1px solid rgba(148,163,184,.25);">Item</th><th style="text-align:left;padding:6px;border-bottom:1px solid rgba(148,163,184,.25);">Seller</th><th style="text-align:left;padding:6px;border-bottom:1px solid rgba(148,163,184,.25);">Qty</th><th style="text-align:left;padding:6px;border-bottom:1px solid rgba(148,163,184,.25);">Amount</th></tr></thead><tbody>' + items + '</tbody></table>' +
+                '<div style="display:grid;gap:4px;margin-top:8px;"><div><strong>Subtotal:</strong> ' + esc(money(order.subtotal || order.total)) + '</div><div><strong>Discount:</strong> ' + esc(money(order.discount || 0)) + '</div><div><strong>Shipping:</strong> ' + esc(money(order.shipping || 0)) + '</div><div><strong>Total:</strong> ' + esc(money(order.total)) + '</div><div><strong>Status:</strong> ' + esc(order.status) + '</div></div></div>';
+            byId("invoiceModal").classList.add("open");
+        }
+
+        function printInvoice() {
+            const content = byId("invoiceBody").innerHTML;
+            const win = window.open("", "_blank");
+            if (!win) { alert("Popup blocked. Allow popups to print invoice."); return; }
+            win.document.write('<!DOCTYPE html><html><head><title>Invoice</title><style>body{font-family:Arial,sans-serif;padding:18px;}table{width:100%;border-collapse:collapse;}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left;}</style></head><body>' + content + '</body></html>');
+            win.document.close();
+            win.focus();
+            win.print();
+        }
+
+        function closeInvoice() { byId("invoiceModal").classList.remove("open"); }
+
+        function exportOrders() {
+            if (!state.filtered.length) { alert("No orders to export."); return; }
+            const headers = ["id", "date", "status", "paymentMethod", "total", "items", "address", "phone"];
+            const csv = [headers.join(",")].concat(state.filtered.map(function (order) {
+                const row = { id: order.id, date: new Date(order.placedAt).toLocaleString(), status: order.status, paymentMethod: order.paymentMethod, total: order.total, items: order.cart.map(function (item) { return item.name + " x" + item.quantity; }).join(" | "), address: order.address, phone: order.phone };
+                return headers.map(function (h) { return '"' + String(row[h]).replace(/\"/g, '""') + '"'; }).join(",");
+            })).join("\n");
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "buyers-orders.csv";
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        function handleOrderAction(action, order) {
+            if (!order) return;
+            if (action === "copy") {
+                const value = str(order.id);
+                if (!value) return;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(value).then(function () {
+                        alert("Order ID copied: " + value);
+                    }).catch(function () {
+                        alert("Could not copy automatically. Order ID: " + value);
+                    });
+                } else {
+                    alert("Order ID: " + value);
+                }
+                return;
+            }
+            if (action === "invoice") showInvoice(order);
+            if (action === "reorder") {
+                const cart = read("cart", []);
+                write("cart", mergeCartItems(cart, order.cart));
+                alert("Items added to cart.");
+                window.location.href = "cart.html";
+            }
+            if (action === "chat") {
+                const seller = chooseSeller(order);
+                if (!seller) return;
+                MMStorage.setItem("chatWith", seller.name);
+                window.location.href = "chat.html?seller=" + encodeURIComponent(seller.name);
+            }
+            if (action === "rate") {
+                const seller = chooseSeller(order);
+                if (!seller) return;
+                pushSellerRating(order, seller);
+            }
+            if (action === "complain") {
+                const seller = chooseSeller(order);
+                if (!seller) return;
+                pushSellerComplaint(order, seller);
+            }
+            if (action === "cancel") cancelOrder(order);
+        }
+
+        function bindEvents() {
+            ["searchInput", "statusFilter", "paymentFilter", "dateFilter", "sortFilter"].forEach(function (id) {
+                byId(id).addEventListener(id === "searchInput" ? "input" : "change", reloadFiltered);
+            });
+
+            byId("resetBtn").addEventListener("click", function () {
+                byId("searchInput").value = "";
+                byId("statusFilter").value = "";
+                byId("paymentFilter").value = "";
+                byId("dateFilter").value = "all";
+                byId("sortFilter").value = "newest";
+                reloadFiltered();
+            });
+
+            byId("orderList").addEventListener("click", function (event) {
+                const btn = event.target.closest("button[data-action]");
+                if (!btn) return;
+                const order = getOrderByFilteredIndex(btn.getAttribute("data-id"));
+                handleOrderAction(btn.getAttribute("data-action"), order);
+            });
+
+            byId("exportOrdersBtn").addEventListener("click", exportOrders);
+            byId("closeInvoiceBtn").addEventListener("click", closeInvoice);
+            byId("printInvoiceBtn").addEventListener("click", printInvoice);
+            byId("invoiceModal").addEventListener("click", function (event) {
+                if (event.target === byId("invoiceModal")) closeInvoice();
+            });
+
+            window.addEventListener("storage", reload);
+        }
+
+        function reloadFiltered() {
+            applyFilters();
+            renderOrders();
+        }
+
+        async function reload() {
+            state.currentUser = read("currentUser", null);
+            state.checkoutDraft = loadCheckoutDraft();
+            state.orderSource = "local";
+            try {
+                const apiOrders = await getCurrentBuyerOrdersFromApi();
+                if (Array.isArray(apiOrders)) {
+                    state.orders = apiOrders;
+                    state.orderSource = "api";
+                } else {
+                    state.orders = getCurrentBuyerOrdersLocal();
+                }
+            } catch (_error) {
+                state.orders = getCurrentBuyerOrdersLocal();
+                state.orderSource = "local";
+            }
+            updateKpis();
+            renderOwnerNotice();
+            renderCheckoutDraft();
+            applyFilters();
+            renderOrders();
+        }
+
+        window.addEventListener("load", function () {
+            const ready = window.MMStorage && window.MMStorage.ready;
+            const start = function () {
+                bindEvents();
+                reload();
+            };
+            if (ready && typeof ready.then === "function") {
+                ready.finally(start);
+                return;
+            }
+            start();
+        });
+    </script>
+</body>
+</html>
+
+

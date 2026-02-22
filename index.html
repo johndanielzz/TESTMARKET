@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>MatrixMarket - Home</title>
+  <link rel="icon" type="image/x-icon" href="matrixx.png" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .page-container{max-width:1120px;margin:0 auto;padding:0 16px}
+    header{background:rgba(0,0,0,.75);display:flex;justify-content:space-between;align-items:center;padding:12px 20px;position:sticky;top:0;z-index:1000;backdrop-filter:blur(8px)}
+    .logo{font-size:1.6rem;font-weight:700;color:#06b6d4}
+    nav{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+    nav a{color:#fff;text-decoration:none;font-weight:500}
+    .dropdown{position:relative}.dropdown-content{display:none;position:absolute;right:0;background:rgba(15,23,42,.95);min-width:170px;border-radius:8px;overflow:hidden}
+    .dropdown-content a{display:block;padding:10px 12px}.dropdown:hover .dropdown-content{display:block}
+    .balance-box{font-weight:700;color:#22c55e;background:rgba(34,197,94,.12);padding:6px 10px;border-radius:8px}
+    .topup-btn,.btn{background:#06b6d4;color:#fff;border:none;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;text-decoration:none}
+    .hero{margin-top:18px;padding:50px 16px 36px;text-align:center;border-radius:16px;background:linear-gradient(135deg,#0f172a,#1e293b,#4f46e5,#06b6d4);background-size:400% 400%;animation:g 15s ease infinite}
+    @keyframes g{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}
+    .hero h1{font-size:2.2rem;margin:0 0 8px}.hero p{margin:0 0 14px;color:#e6eef8}.hero-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+    .deal-box{display:inline-flex;gap:8px;background:rgba(15,23,42,.6);padding:7px 12px;border:1px solid rgba(148,163,184,.35);border-radius:999px;margin-top:12px}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
+    .stat{background:rgba(255,255,255,.06);border:1px solid rgba(148,163,184,.25);border-radius:10px;padding:12px}.stat b{display:block;font-size:1.15rem;margin-top:2px}
+    .control{margin:16px 0;padding:12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(148,163,184,.2)}
+    .row{display:grid;grid-template-columns:1.2fr .9fr .9fr;gap:10px}.row2{display:grid;grid-template-columns:1.2fr auto;gap:10px;margin-top:10px;align-items:center}
+    input,select{padding:10px;border:none;border-radius:10px;background:rgba(15,23,42,.75);color:#e2e8f0}
+    .range-wrap{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
+    .btn-alt{background:rgba(15,23,42,.8);border:1px solid rgba(203,213,225,.25)}
+    .products{padding:10px 0}.head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-top:12px}
+    .card{background:rgba(255,255,255,.06);border-radius:12px;padding:10px;display:flex;flex-direction:column;min-height:320px;position:relative}
+    .badge{position:absolute;top:8px;left:8px;background:#22c55e;color:#052e16;padding:2px 8px;border-radius:999px;font-size:.73rem;font-weight:700}
+    .thumb{height:160px;width:100%;object-fit:cover;border-radius:10px;background:#0b1220}
+    .card h3{margin:8px 0 4px}.meta{font-size:.86rem;color:#cbd5e1;margin:1px 0}.price-row{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:8px}
+    .mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:6px}.mini button{background:rgba(15,23,42,.82);border:1px solid rgba(148,163,184,.22);color:#dbeafe;border-radius:8px;padding:7px 6px;cursor:pointer}.mini .active{color:#fde68a;border-color:rgba(250,204,21,.6)}
+    .panels{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}.panel{background:rgba(255,255,255,.06);border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:12px}
+    .list{display:grid;gap:8px}.item{background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.2);border-radius:10px;padding:8px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px}
+    .item .value{font-size:.82rem;color:#94a3b8}.item button{background:rgba(6,182,212,.18);border:1px solid rgba(6,182,212,.35);color:#e0f2fe;border-radius:8px;padding:7px 10px;cursor:pointer}
+    .empty{color:#94a3b8;text-align:center;padding:12px;border:1px dashed rgba(148,163,184,.4);border-radius:10px}
+    .modal{position:fixed;inset:0;background:rgba(2,6,23,.72);display:none;align-items:center;justify-content:center;z-index:1450;padding:16px}
+    .modal.open{display:flex}.modal-card{width:min(780px,100%);display:grid;grid-template-columns:1fr 1fr;background:#0f172a;border:1px solid rgba(148,163,184,.25);border-radius:14px;overflow:hidden}
+    .modal-card img{width:100%;height:100%;min-height:240px;object-fit:cover}.modal-info{padding:14px;display:grid;gap:8px}.close{justify-self:end;width:34px;height:34px;border:1px solid rgba(148,163,184,.3);background:rgba(30,41,59,.8);color:#e2e8f0;border-radius:8px;cursor:pointer}
+    .modal-actions{display:flex;gap:8px;flex-wrap:wrap}
+    footer{text-align:center;padding:18px;background:rgba(0,0,0,.7);border-radius:12px 12px 0 0;color:#cbd5e1}
+    @media (max-width:980px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.panels{grid-template-columns:1fr}.modal-card{grid-template-columns:1fr}}
+    @media (max-width:640px){.row,.row2,.mini{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}.hero h1{font-size:1.7rem}}
+  </style>
+  <link rel="stylesheet" href="upgrade.css" />
+  <script src="firebase-online-storage.js"></script>
+</head>
+<body>
+  <div class="page-container">
+    <header>
+      <div class="logo">MatrixMarket</div>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="shop.html">Shop</a>
+        <a href="seller-login.html">Sellers</a>
+        <a href="chat.html">Chat</a>
+        <a href="agent-page.html">Agent Page</a>
+        <a href="cart.html" id="cartLink">Cart (0)</a>
+        <div class="dropdown"><a href="#">My Account</a><div class="dropdown-content" id="accountLinks"></div></div>
+        <span id="welcomeUser"></span>
+        <span class="balance-box" id="userBalance">Balance: 0 GMD</span>
+        <a href="confirm-payment.html" class="topup-btn">Top Up</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <h1>Welcome to MatrixMarket</h1>
+      <p>Smart filters, wishlist, quick view, and faster checkout from the homepage.</p>
+      <div class="hero-actions">
+        <a href="shop.html" class="btn">Start Shopping</a>
+        <a href="agent-page.html" class="btn btn-alt">Agent Page</a>
+        <button class="btn btn-alt" id="viewWishlistBtn" type="button">Open Wishlist</button>
+      </div>
+      <div class="deal-box"><span>Daily deal ends in</span><strong id="dealTimer">--:--:--</strong></div>
+    </section>
+
+    <section class="stats">
+      <article class="stat"><span>Products</span><b id="statProducts">0</b></article>
+      <article class="stat"><span>Categories</span><b id="statCategories">0</b></article>
+      <article class="stat"><span>Average Price</span><b id="statAvgPrice">0 GMD</b></article>
+      <article class="stat"><span>Top Seller</span><b id="statTopSeller">N/A</b></article>
+    </section>
+
+    <section class="control">
+      <div class="row">
+        <input id="searchInput" type="text" placeholder="Search product, category, seller" />
+        <select id="categoryFilter"><option value="">All Categories</option></select>
+        <select id="sortFilter">
+          <option value="latest">Sort: Latest</option>
+          <option value="priceLow">Sort: Low to High</option>
+          <option value="priceHigh">Sort: High to Low</option>
+          <option value="nameAZ">Sort: Name A-Z</option>
+        </select>
+      </div>
+      <div class="row2">
+        <label class="range-wrap" for="maxPriceFilter"><span>Max Price</span><input id="maxPriceFilter" type="range" min="0" max="2000" value="2000" /><strong id="maxPriceValue">2000 GMD</strong></label>
+        <div>
+          <button class="btn" type="button" onclick="filterProducts()">Apply</button>
+          <button class="btn btn-alt" type="button" onclick="clearFilters()">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="products">
+      <div class="head"><h2>Latest Products</h2><div id="resultCount">0 items</div></div>
+      <div id="productList" class="grid" aria-live="polite"></div>
+    </section>
+
+    <section class="panels">
+      <article class="panel"><h3>Wishlist (<span id="wishlistCount">0</span>)</h3><div id="wishlistPreview" class="list"></div></article>
+      <article class="panel"><h3>Recently Viewed</h3><div id="recentList" class="list"></div></article>
+    </section>
+
+    <footer><p>&copy; 2026 MatrixMarket. All rights reserved.</p></footer>
+  </div>
+
+  <div id="quickViewModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <img id="quickImage" src="" alt="Product preview" />
+      <div class="modal-info">
+        <button id="quickCloseBtn" class="close" type="button">X</button>
+        <h3 id="quickName">Product</h3>
+        <div class="meta" id="quickCategory"></div>
+        <div class="meta" id="quickSeller"></div>
+        <div id="quickPrice"></div>
+        <p class="meta" id="quickDesc"></p>
+        <div class="modal-actions">
+          <button id="quickAddBtn" class="btn" type="button">Add to Cart</button>
+          <button id="quickBuyBtn" class="btn btn-alt" type="button">Buy Now</button>
+          <button id="quickWishBtn" class="btn btn-alt" type="button">Wishlist</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const fallbackProducts = [
+      { id: 'demo1', name: 'Wireless Earbuds', category: 'electronics', price: 320, seller: 'Matrix Store', image: 'https://via.placeholder.com/640x420?text=Wireless+Earbuds', desc: 'Portable earbuds with long battery life' },
+      { id: 'demo2', name: 'Gaming Mouse', category: 'gaming', price: 210, seller: 'Tech Arena', image: 'https://via.placeholder.com/640x420?text=Gaming+Mouse', desc: 'High precision RGB mouse' },
+      { id: 'demo3', name: 'Smart Jacket', category: 'fashion', price: 470, seller: 'Urban Fashion', image: 'https://via.placeholder.com/640x420?text=Smart+Jacket', desc: 'Comfort fit jacket with premium finish' },
+      { id: 'demo4', name: 'Desk Lamp', category: 'home', price: 145, seller: 'Home Hub', image: 'https://via.placeholder.com/640x420?text=Desk+Lamp', desc: 'LED lamp with adjustable brightness' }
+    ];
+    const state = { products: [], filtered: [], wishlist: new Set(), recent: [], selectedKey: null };
+    const byId = id => document.getElementById(id);
+    const num = v => Number.isFinite(Number(v)) ? Number(v) : 0;
+    const money = v => num(v).toFixed(2) + ' GMD';
+    const esc = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;');
+    const normalizeEmail = v => String(v || '').trim().toLowerCase();
+    const isSellerRecord = v => Boolean(v && (v.isSeller || String(v.role || v.accountType || '').toLowerCase() === 'seller'));
+    const deepField = (source, key, fallback = '') => {
+      let current = source;
+      for (let i = 0; i < 8; i += 1) {
+        if (!current || typeof current !== 'object') break;
+        if (Object.prototype.hasOwnProperty.call(current, key)) {
+          const value = current[key];
+          if (value !== undefined && value !== null && value !== '') return value;
+        }
+        current = current.raw;
+      }
+      return fallback;
+    };
+    function readStorage(key, fallback) {
+      const raw = MMStorage.getItem(key);
+      if (raw === null) return fallback;
+      try { return JSON.parse(raw); } catch (_) { return raw; }
+    }
+    function writeStorage(key, value) {
+      if (value === undefined) { MMStorage.removeItem(key); return; }
+      const isObj = value !== null && typeof value === 'object';
+      MMStorage.setItem(key, isObj ? JSON.stringify(value) : String(value));
+    }
+    function removeStorage(key) {
+      MMStorage.removeItem(key);
+    }
+    const read = (k,f) => {
+      const value = readStorage(k, undefined);
+      return value == null ? f : value;
+    };
+    const toArray = value => {
+      if (Array.isArray(value)) return value.slice();
+      if (value && typeof value === 'object') {
+        return Object.keys(value).map(function (key) {
+          const row = value[key];
+          if (row && typeof row === 'object') {
+            const next = { ...row };
+            if (!next.email && !next.mail && String(key).includes('@')) next.email = String(key);
+            if (!next.id) next.id = String(key);
+            if (!next.name && !next.title && !next.fullName && !String(key).includes('@')) next.name = String(key);
+            return next;
+          }
+          return { id: key, value: row };
+        });
+      }
+      return [];
+    };
+    const keyOf = p => [String(p.name||'').toLowerCase(), String(p.seller||'').toLowerCase(), num(p.price), String(p.category||'').toLowerCase()].join('|');
+    const find = key => state.products.find(p => p._key === key) || null;
+
+    function normalize(items) {
+      return items.map((p, i) => {
+        const row = p && typeof p === 'object' ? p : {};
+        const name = String(deepField(row, 'name', deepField(row, 'title', 'Product ' + (i + 1))));
+        const category = String(deepField(row, 'category', 'general')).toLowerCase();
+        const seller = String(deepField(row, 'seller', deepField(row, 'sellerName', 'Marketplace')));
+        const image = String(deepField(row, 'image', 'https://via.placeholder.com/640x420?text=No+Image'));
+        const price = num(deepField(row, 'price', 0));
+        const stockRaw = deepField(row, 'stock', deepField(row, 'qty', deepField(row, 'quantity', 1)));
+        const stock = Math.max(0, Math.floor(num(stockRaw)));
+        const status = String(deepField(row, 'status', stock > 0 ? 'active' : 'soldout')).toLowerCase();
+        const visibleRaw = deepField(row, 'isVisible', '');
+        const isVisible = (typeof visibleRaw === 'boolean') ? visibleRaw : String(visibleRaw).toLowerCase() !== 'false';
+        const sellerEmail = normalizeEmail(deepField(row, 'sellerEmail', deepField(row, 'email', '')));
+        const createdRaw = num(deepField(row, 'createdAt', deepField(row, 'id', 0)));
+        return {
+          ...row,
+          name,
+          category,
+          seller,
+          sellerEmail,
+          image,
+          desc: String(deepField(row, 'desc', deepField(row, 'description', 'No description available.'))),
+          price,
+          stock,
+          status,
+          isVisible,
+          _created: createdRaw > 1000000000 ? createdRaw : i,
+          _key: keyOf({name, seller, category, price})
+        };
+      });
+    }
+
+    function activeUser() {
+      const sessionUser = read('currentUser', null) || read('loggedInUser', null) || read('currentSeller', null);
+      if (!sessionUser) return null;
+
+      const sessionEmail = normalizeEmail(deepField(sessionUser, 'email', deepField(sessionUser, 'mail', '')));
+      const users = toArray(read('users', []));
+      const sellers = toArray(read('sellers', []));
+
+      const fromUsers = users.find(function (u) {
+        return normalizeEmail(deepField(u, 'email', deepField(u, 'mail', ''))) === sessionEmail;
+      }) || null;
+      const fromSellers = sellers.find(function (s) {
+        return normalizeEmail(deepField(s, 'email', deepField(s, 'mail', ''))) === sessionEmail;
+      }) || null;
+
+      const merged = { ...sessionUser, ...(fromUsers || {}), ...(fromSellers || {}) };
+      const balanceCandidates = [
+        num(deepField(sessionUser, 'balance', 0)),
+        num(deepField(fromUsers, 'balance', 0)),
+        num(deepField(fromSellers, 'balance', 0))
+      ];
+      merged.balance = Math.max(0, ...balanceCandidates);
+      const email = normalizeEmail(deepField(merged, 'email', deepField(merged, 'mail', sessionEmail)));
+      return { ...merged, email: email || String(merged.email || '') };
+    }
+
+    function syncAccountBalance(email, balance) {
+      const target = normalizeEmail(email);
+      if (!target) return;
+
+      const nextBalance = num(balance);
+      const users = toArray(read('users', []));
+      const sellers = toArray(read('sellers', []));
+
+      let usersChanged = false;
+      let sellersChanged = false;
+
+      const nextUsers = users.map(function (row) {
+        const rowEmail = normalizeEmail(deepField(row, 'email', deepField(row, 'mail', '')));
+        if (rowEmail !== target) return row;
+        usersChanged = true;
+        return { ...row, balance: nextBalance };
+      });
+
+      const nextSellers = sellers.map(function (row) {
+        const rowEmail = normalizeEmail(deepField(row, 'email', deepField(row, 'mail', '')));
+        if (rowEmail !== target) return row;
+        sellersChanged = true;
+        return { ...row, balance: nextBalance };
+      });
+
+      if (usersChanged) writeStorage('users', nextUsers);
+      if (sellersChanged) writeStorage('sellers', nextSellers);
+    }
+
+    function refreshUserInfo() {
+      const user = activeUser();
+      const requests = toArray(read('pendingRequests', []));
+      let balance = 0;
+      if (user) {
+        const email = normalizeEmail(user.email);
+        balance = num(user.balance);
+        requests.forEach(r => {
+          const status = String(r && r.status || '').toLowerCase();
+          const type = String(r && r.type || '').toLowerCase();
+          const sameEmail = normalizeEmail(deepField(r, 'email', '')) === email;
+          const ok = ['approved', 'success', 'paid'].includes(status);
+          if (sameEmail && ok && !r.addedToBalance && !type.includes('subscription')) {
+            balance += num(r.amount);
+            r.addedToBalance = true;
+          }
+        });
+        user.balance = balance;
+        writeStorage('pendingRequests', requests);
+        writeStorage('currentUser', user);
+        writeStorage('loggedInUser', user);
+        if (isSellerRecord(user)) {
+          writeStorage('currentSeller', user);
+        }
+        syncAccountBalance(email, balance);
+        writeStorage('balance', balance);
+        byId('welcomeUser').innerText = 'Hi, ' + (user.fullName || user.name || user.email || 'User');
+        byId('userBalance').innerText = 'Balance: ' + balance.toFixed(2) + ' GMD';
+        if (isSellerRecord(user)) {
+          byId('accountLinks').innerHTML = '<a href="seller-dashboard.html">Seller Dashboard</a><a href="subscription-code.html">Subscription Code</a><a href="settings.html">Settings</a><a href="#" onclick="logoutUser()">Logout</a>';
+        } else {
+          byId('accountLinks').innerHTML = '<a href="buyers-orders.html">My Orders</a><a href="settings.html">Settings</a><a href="#" onclick="logoutUser()">Logout</a>';
+        }
+      } else {
+        removeStorage('currentUser');
+        removeStorage('loggedInUser');
+        removeStorage('currentSeller');
+        byId('welcomeUser').innerText = '';
+        byId('userBalance').innerText = 'Balance: 0 GMD';
+        byId('accountLinks').innerHTML = '<a href="login.html">Login</a><a href="register.html">Sign Up</a>';
+      }
+    }
+
+    function logoutUser() {
+      removeStorage('currentUser');
+      removeStorage('loggedInUser');
+      removeStorage('currentSeller');
+      refreshUserInfo();
+      alert('Logged out successfully');
+    }
+    function loadProducts() {
+      const stored = toArray(read('products', []));
+      const source = stored.length ? stored : fallbackProducts;
+      const normalized = normalize(source);
+      const inStockVisible = normalized.filter(function (p) {
+        const visible = p.isVisible !== false && String(p.status || '').toLowerCase() !== 'hidden';
+        return visible && num(p.stock) > 0 && num(p.price) >= 0;
+      });
+      if (inStockVisible.length) return inStockVisible;
+      return normalized.filter(function (p) {
+        const visible = p.isVisible !== false && String(p.status || '').toLowerCase() !== 'hidden';
+        return visible && num(p.price) >= 0;
+      });
+    }
+    function saveWishlist() { writeStorage('wishlist', Array.from(state.wishlist)); }
+    function loadWishlist() { const items = read('wishlist', []); state.wishlist = new Set(Array.isArray(items) ? items : []); }
+    function saveRecent() { writeStorage('recentlyViewedProducts', state.recent); }
+    function loadRecent() { const items = read('recentlyViewedProducts', []); state.recent = Array.isArray(items) ? items.slice(0, 10) : []; }
+
+    function updateCartCount() {
+      const cart = read('cart', []);
+      const count = Array.isArray(cart) ? cart.reduce((s, it) => s + Math.max(1, num(it.quantity || 1)), 0) : 0;
+      byId('cartLink').textContent = 'Cart (' + count + ')';
+    }
+
+    function addToCart(product, silent) {
+      if (!product) return;
+      if (num(product.stock) <= 0) {
+        alert('This product is currently sold out.');
+        return;
+      }
+      const cart = read('cart', []);
+      const idx = cart.findIndex(i => String(i.name||'')===product.name && String(i.seller||'')===product.seller);
+      if (idx >= 0) {
+        const base = Math.max(1, num(cart[idx].quantity || 1));
+        cart[idx].quantity = Math.min(Math.max(1, product.stock), base + 1);
+      } else {
+        cart.push({ id: product.id || '', name: product.name, price: product.price, image: product.image, seller: product.seller, sellerEmail: product.sellerEmail || '', category: product.category, quantity: 1 });
+      }
+      writeStorage('cart', cart);
+      writeStorage('cartItems', cart);
+      updateCartCount();
+      if (!silent) alert(product.name + ' added to cart');
+    }
+
+    function buyNow(p) { addToCart(p, true); window.location.href = 'checkout.html'; }
+
+    function updateStats() {
+      const products = state.products;
+      const cats = new Set(products.map(p => p.category));
+      const avg = products.length ? products.reduce((s,p) => s + num(p.price), 0) / products.length : 0;
+      const sellers = {};
+      products.forEach(p => sellers[p.seller] = (sellers[p.seller] || 0) + 1);
+      let top = 'N/A', max = 0;
+      Object.entries(sellers).forEach(([k,v]) => { if (v > max) { max = v; top = k; } });
+      byId('statProducts').textContent = String(products.length);
+      byId('statCategories').textContent = String(cats.size);
+      byId('statAvgPrice').textContent = money(avg);
+      byId('statTopSeller').textContent = top;
+    }
+
+    function populateCategories() {
+      const select = byId('categoryFilter');
+      const current = select.value;
+      const cats = Array.from(new Set(state.products.map(p => p.category))).sort();
+      select.innerHTML = '<option value="">All Categories</option>' + cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+      if (cats.includes(current)) select.value = current;
+    }
+
+    function setupRange() {
+      const slider = byId('maxPriceFilter');
+      const max = Math.max(0, ...state.products.map(p => num(p.price)));
+      const rounded = max > 0 ? Math.ceil(max) : 2000;
+      slider.max = String(rounded);
+      if (!slider.dataset.init || num(slider.value) > rounded) { slider.value = String(rounded); slider.dataset.init = '1'; }
+      byId('maxPriceValue').textContent = Math.floor(num(slider.value)) + ' GMD';
+    }
+
+    function sortItems(items, mode) {
+      const out = [...items];
+      if (mode === 'priceLow') out.sort((a,b) => num(a.price)-num(b.price));
+      else if (mode === 'priceHigh') out.sort((a,b) => num(b.price)-num(a.price));
+      else if (mode === 'nameAZ') out.sort((a,b) => a.name.localeCompare(b.name));
+      else out.sort((a,b) => num(b._created)-num(a._created));
+      return out;
+    }
+
+    function filterProducts() {
+      const q = byId('searchInput').value.toLowerCase().trim();
+      const cat = byId('categoryFilter').value;
+      const sort = byId('sortFilter').value;
+      const maxP = num(byId('maxPriceFilter').value);
+      state.filtered = sortItems(state.products.filter(p => {
+        const inText = !q || p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q) || p.seller.toLowerCase().includes(q);
+        return inText && (!cat || p.category === cat) && num(p.price) <= maxP;
+      }), sort);
+      renderProducts();
+    }
+
+    function clearFilters() { byId('searchInput').value=''; byId('categoryFilter').value=''; byId('sortFilter').value='latest'; setupRange(); filterProducts(); }
+
+    function renderProducts() {
+      const target = byId('productList');
+      byId('resultCount').textContent = state.filtered.length + ' items';
+      if (!state.filtered.length) { target.innerHTML = '<div class="empty">No products found with these filters.</div>'; return; }
+      const newest = new Set([...state.products].sort((a,b)=>num(b._created)-num(a._created)).slice(0,6).map(p=>p._key));
+      target.innerHTML = state.filtered.map(p => {
+        const id = encodeURIComponent(p._key);
+        const soldOut = num(p.stock) <= 0;
+        return `<article class="card">${newest.has(p._key)?'<span class="badge">New</span>':''}${soldOut?'<span class="badge" style="left:auto;right:8px;background:#f59e0b;color:#111827;">Sold Out</span>':''}<img class="thumb" src="${esc(p.image)}" alt="${esc(p.name)}" /><h3>${esc(p.name)}</h3><p class="meta">Category: ${esc(p.category)}</p><p class="meta">Seller: ${esc(p.seller)}</p><p class="meta">Stock: ${Math.max(0, Math.floor(num(p.stock)))}</p><div class="price-row"><strong>${money(p.price)}</strong><button class="btn" data-action="cart" data-id="${id}" type="button" ${soldOut?'disabled':''}>${soldOut?'Sold Out':'Add'}</button></div><div class="mini"><button data-action="buy" data-id="${id}" type="button" ${soldOut?'disabled':''}>${soldOut?'Unavailable':'Buy'}</button><button class="${state.wishlist.has(p._key)?'active':''}" data-action="wish" data-id="${id}" type="button">Wish</button><button data-action="view" data-id="${id}" type="button">View</button></div></article>`;
+      }).join('');
+    }
+
+    function renderWishlist() {
+      const el = byId('wishlistPreview');
+      const items = Array.from(state.wishlist).map(find).filter(Boolean);
+      byId('wishlistCount').textContent = String(items.length);
+      if (!items.length) { el.innerHTML = '<div class="empty">No wishlist items yet.</div>'; return; }
+      el.innerHTML = items.slice(0,6).map(p => `<div class="item"><div><div>${esc(p.name)}</div><div class="value">${money(p.price)}</div></div><button type="button" data-panel="open" data-id="${encodeURIComponent(p._key)}">Open</button></div>`).join('');
+    }
+
+    function renderRecent() {
+      const el = byId('recentList');
+      const items = state.recent.map(find).filter(Boolean);
+      if (!items.length) { el.innerHTML = '<div class="empty">No recent views yet.</div>'; return; }
+      el.innerHTML = items.map(p => `<div class="item"><div><div>${esc(p.name)}</div><div class="value">${esc(p.category)} | ${money(p.price)}</div></div><button type="button" data-panel="open" data-id="${encodeURIComponent(p._key)}">View</button></div>`).join('');
+    }
+
+    function toggleWishlist(key) {
+      if (state.wishlist.has(key)) { state.wishlist.delete(key); alert('Removed from wishlist'); }
+      else { state.wishlist.add(key); alert('Added to wishlist'); }
+      saveWishlist(); renderProducts(); renderWishlist();
+    }
+
+    function trackRecent(key) { state.recent = state.recent.filter(k => k !== key); state.recent.unshift(key); state.recent = state.recent.slice(0,8); saveRecent(); renderRecent(); }
+
+    function openModal(p) {
+      if (!p) return;
+      state.selectedKey = p._key;
+      trackRecent(p._key);
+      byId('quickImage').src = p.image;
+      byId('quickName').textContent = p.name;
+      byId('quickCategory').textContent = 'Category: ' + p.category;
+      byId('quickSeller').textContent = 'Seller: ' + p.seller;
+      byId('quickPrice').textContent = money(p.price);
+      byId('quickDesc').textContent = p.desc || 'No description available.';
+      byId('quickWishBtn').textContent = state.wishlist.has(p._key) ? 'Remove Wishlist' : 'Add Wishlist';
+      byId('quickViewModal').classList.add('open');
+      byId('quickViewModal').setAttribute('aria-hidden', 'false');
+    }
+    function closeModal() { byId('quickViewModal').classList.remove('open'); byId('quickViewModal').setAttribute('aria-hidden', 'true'); }
+
+    function tickDeal() {
+      const now = new Date(); const end = new Date(now); end.setHours(24,0,0,0);
+      const diff = Math.max(0, end - now);
+      const h = String(Math.floor(diff/3600000)).padStart(2,'0');
+      const m = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+      const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+      byId('dealTimer').textContent = h + ':' + m + ':' + s;
+    }
+
+    function bind() {
+      byId('searchInput').addEventListener('input', filterProducts);
+      byId('categoryFilter').addEventListener('change', filterProducts);
+      byId('sortFilter').addEventListener('change', filterProducts);
+      byId('maxPriceFilter').addEventListener('input', function(){ byId('maxPriceValue').textContent = Math.floor(num(this.value)) + ' GMD'; filterProducts(); });
+      byId('viewWishlistBtn').addEventListener('click', function(){ byId('wishlistPreview').scrollIntoView({behavior:'smooth', block:'center'}); });
+      byId('productList').addEventListener('click', function(e){
+        const b = e.target.closest('button[data-action]'); if (!b) return;
+        const key = decodeURIComponent(b.dataset.id || ''); const p = find(key); if (!p) return;
+        if (b.dataset.action === 'cart') addToCart(p, false);
+        else if (b.dataset.action === 'buy') buyNow(p);
+        else if (b.dataset.action === 'wish') toggleWishlist(key);
+        else if (b.dataset.action === 'view') openModal(p);
+      });
+      [byId('wishlistPreview'), byId('recentList')].forEach(box => box.addEventListener('click', function(e){ const b = e.target.closest('button[data-panel]'); if (!b) return; const p = find(decodeURIComponent(b.dataset.id || '')); if (p) openModal(p); }));
+      byId('quickCloseBtn').addEventListener('click', closeModal);
+      byId('quickViewModal').addEventListener('click', function(e){ if (e.target === this) closeModal(); });
+      byId('quickAddBtn').addEventListener('click', function(){ const p = find(state.selectedKey); if (p) addToCart(p, false); });
+      byId('quickBuyBtn').addEventListener('click', function(){ const p = find(state.selectedKey); if (p) buyNow(p); });
+      byId('quickWishBtn').addEventListener('click', function(){ if (!state.selectedKey) return; toggleWishlist(state.selectedKey); const p = find(state.selectedKey); if (p) this.textContent = state.wishlist.has(p._key) ? 'Remove Wishlist' : 'Add Wishlist'; });
+    }
+
+    async function initializePage() {
+      state.products = loadProducts();
+      loadWishlist();
+      loadRecent();
+      populateCategories();
+      setupRange();
+      updateStats();
+      filterProducts();
+      renderWishlist();
+      renderRecent();
+      refreshUserInfo();
+      updateCartCount();
+      bind();
+      tickDeal();
+      setInterval(tickDeal, 1000);
+    }
+
+    window.addEventListener('load', function() {
+      const ready = window.MMStorage && window.MMStorage.ready;
+      const start = function () { initializePage().catch(() => {}); };
+      if (ready && typeof ready.then === 'function') {
+        ready.finally(start);
+        return;
+      }
+      start();
+    });
+    window.addEventListener('storage', function(){ state.products = loadProducts(); populateCategories(); setupRange(); updateStats(); filterProducts(); renderWishlist(); renderRecent(); refreshUserInfo(); updateCartCount(); });
+  </script>
+  <script defer src="upgrade.js"></script>
+</body>
+</html>
+
+

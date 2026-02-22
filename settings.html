@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>MatrixMarket - Settings</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body{margin:0;font-family:"Poppins",sans-serif;background:linear-gradient(135deg,#0f172a,#1e293b,#4f46e5,#06b6d4);background-size:400% 400%;animation:bg 16s ease infinite;color:#fff}
+        @keyframes bg{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}
+        header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:rgba(0,0,0,.52);position:sticky;top:0;z-index:1000}
+        .logo{font-size:1.4rem;font-weight:800;color:#06b6d4}nav{display:flex;gap:12px;flex-wrap:wrap}nav a{color:#fff;text-decoration:none;font-weight:600}
+        .page{width:min(1160px,100% - 16px);margin:16px auto 26px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .card{background:rgba(255,255,255,.09);border:1px solid rgba(148,163,184,.26);border-radius:14px;padding:12px}
+        h1,h2,h3,p{margin:0}.title{color:#67e8f9;margin-bottom:10px}
+        .grid{display:grid;gap:8px}input,select,textarea{width:100%;border:1px solid rgba(148,163,184,.25);background:rgba(2,6,23,.55);color:#e2e8f0;border-radius:10px;padding:10px;font:inherit}
+        textarea{min-height:82px;resize:vertical}
+        .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        .btn{border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#06b6d4,#4f46e5);color:#fff}
+        .btn.alt{background:rgba(30,41,59,.78);border:1px solid rgba(148,163,184,.3)}
+        .btn.danger{background:linear-gradient(135deg,#ef4444,#dc2626)}
+        .wallet{background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.35);border-radius:10px;padding:10px;font-weight:700;color:#67e8f9}
+        .hint{font-size:.82rem;color:#bfdbfe}
+        .req-list{display:grid;gap:8px;max-height:260px;overflow:auto}
+        .req{background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.2);border-radius:10px;padding:8px;display:grid;gap:4px}
+        .req .meta{font-size:.82rem;color:#94a3b8}
+        .status{font-size:.78rem;border-radius:999px;padding:2px 8px;display:inline-flex;width:max-content}
+        .status.pending{background:rgba(245,158,11,.2);color:#fbbf24}.status.approved{background:rgba(34,197,94,.2);color:#86efac}.status.declined{background:rgba(239,68,68,.2);color:#fca5a5}
+        .msg{display:none;border-radius:10px;padding:10px;margin-top:8px;font-size:.9rem}
+        .msg.ok{background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.35);color:#86efac}
+        .msg.err{background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.35);color:#fca5a5}
+        .tools{display:flex;gap:8px;flex-wrap:wrap}
+        .empty{text-align:center;color:#94a3b8;border:1px dashed rgba(148,163,184,.4);border-radius:10px;padding:12px}
+        @media (max-width:980px){.page{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
+    </style>
+    <link rel="stylesheet" href="upgrade.css">
+    <script src="firebase-online-storage.js"></script>
+</head>
+<body>
+    <header>
+        <div class="logo">MatrixMarket</div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="shop.html">Shop</a>
+            <a href="cart.html">Cart</a>
+            <a href="settings.html">Settings</a>
+        </nav>
+    </header>
+
+    <main class="page">
+        <section class="card">
+            <h2 class="title">Account Profile</h2>
+            <div class="grid">
+                <input id="fullName" type="text" placeholder="Full Name">
+                <input id="email" type="email" placeholder="Email Address">
+                <input id="phone" type="text" placeholder="Phone Number">
+                <textarea id="address" placeholder="Address"></textarea>
+            </div>
+            <div class="row" style="margin-top:8px;">
+                <button id="saveProfileBtn" class="btn" type="button">Save Profile</button>
+                <button id="logoutBtn" class="btn alt" type="button">Logout</button>
+            </div>
+
+            <h3 class="title" style="margin-top:12px;">Security</h3>
+            <div class="grid">
+                <input id="newPassword" type="password" placeholder="New Password">
+                <input id="confirmPassword" type="password" placeholder="Confirm Password">
+                <label class="hint"><input id="showPass" type="checkbox" style="width:auto; margin-right:6px;">Show password fields</label>
+                <button id="savePasswordBtn" class="btn alt" type="button">Update Password</button>
+            </div>
+
+            <h3 class="title" style="margin-top:12px;">Preferences</h3>
+            <div class="grid">
+                <select id="themeSelect">
+                    <option value="dark">Dark Theme</option>
+                    <option value="light">Light Theme</option>
+                </select>
+                <label class="hint"><input id="notifyEmail" type="checkbox" style="width:auto; margin-right:6px;">Email notifications</label>
+                <label class="hint"><input id="notifyDeals" type="checkbox" style="width:auto; margin-right:6px;">Deals and promotions</label>
+                <button id="savePrefsBtn" class="btn alt" type="button">Save Preferences</button>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 class="title">Wallet & Payment Requests</h2>
+            <div class="wallet" id="walletBox">Balance: 0.00 GMD</div>
+            <div class="grid" style="margin-top:8px;">
+                <select id="method">
+                    <option value="Wave (6785316)">Wave (6785316)</option>
+                    <option value="Comcash (6785316)">Comcash (6785316)</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                </select>
+                <input id="amount" type="number" min="1" step="0.01" placeholder="Amount">
+                <div class="row">
+                    <button id="topupBtn" class="btn" type="button">Request Top-Up</button>
+                    <button id="withdrawBtn" class="btn alt" type="button">Request Withdrawal</button>
+                </div>
+                <p class="hint">Requests are stored in <code>pendingRequests</code> and visible to admin.</p>
+            </div>
+
+            <h3 class="title" style="margin-top:10px;">My Requests</h3>
+            <div id="requestList" class="req-list"></div>
+
+            <h3 class="title" style="margin-top:10px;">Data Tools</h3>
+            <div class="tools">
+                <button id="exportBtn" class="btn alt" type="button">Export My Data</button>
+                <button id="deleteBtn" class="btn danger" type="button">Delete Account</button>
+            </div>
+            <p class="hint" style="margin-top:6px;">Deleting account removes your entry from <code>users</code> and clears <code>currentUser</code>.</p>
+        </section>
+    </main>
+
+    <div style="width:min(1160px,100% - 16px); margin:0 auto 20px;">
+        <div id="okMsg" class="msg ok"></div>
+        <div id="errMsg" class="msg err"></div>
+    </div>
+
+    <script>
+        const state = { user: null, oldEmail: null, prefs: { notifyEmail: true, notifyDeals: true } };
+
+        function byId(id){ return document.getElementById(id); }
+        function num(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
+        function money(v){ return num(v).toFixed(2) + " GMD"; }
+        function read(key, fallback){ try { const d = JSON.parse(MMStorage.getItem(key)||"null"); return d ?? fallback; } catch(_){ return fallback; } }
+        function write(key, value){ MMStorage.setItem(key, JSON.stringify(value)); }
+
+        function showError(text){ byId("okMsg").style.display = "none"; byId("errMsg").textContent = text; byId("errMsg").style.display = "block"; }
+        function showSuccess(text){ byId("errMsg").style.display = "none"; byId("okMsg").textContent = text; byId("okMsg").style.display = "block"; }
+
+        function ensureUser(){
+            const user = read("currentUser", null);
+            if (!user) {
+                showError("No user logged in. Redirecting to login...");
+                setTimeout(function(){ window.location.href = "login.html"; }, 1200);
+                return false;
+            }
+            state.user = user;
+            state.oldEmail = user.email || "";
+            return true;
+        }
+
+        function fillForm(){
+            if (!state.user) return;
+            byId("fullName").value = state.user.fullName || state.user.name || "";
+            byId("email").value = state.user.email || "";
+            byId("phone").value = state.user.phone || "";
+            byId("address").value = state.user.address || "";
+            byId("walletBox").textContent = "Balance: " + money(state.user.balance || 0);
+
+            const prefs = read("userPrefs", {});
+            const key = state.user.email || "default";
+            state.prefs = prefs[key] || { notifyEmail: true, notifyDeals: true };
+            byId("notifyEmail").checked = !!state.prefs.notifyEmail;
+            byId("notifyDeals").checked = !!state.prefs.notifyDeals;
+
+            const theme = MMStorage.getItem("mm-theme") || "dark";
+            byId("themeSelect").value = theme;
+        }
+
+        function upsertUserInList(nextUser){
+            const users = read("users", []);
+            const out = Array.isArray(users) ? users.slice() : [];
+            const oldEmail = state.oldEmail;
+            let found = false;
+
+            for (let i = 0; i < out.length; i++) {
+                const u = out[i] || {};
+                if ((oldEmail && u.email === oldEmail) || (nextUser.email && u.email === nextUser.email)) {
+                    out[i] = { ...u, ...nextUser };
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) out.push(nextUser);
+            write("users", out);
+        }
+
+        function updateEmailReferences(newEmail){
+            const oldEmail = state.oldEmail;
+            if (!oldEmail || oldEmail === newEmail) return;
+            const requests = read("pendingRequests", []);
+            const mapped = Array.isArray(requests) ? requests.map(function(r){
+                if (r && r.email === oldEmail) return { ...r, email: newEmail };
+                return r;
+            }) : [];
+            write("pendingRequests", mapped);
+        }
+
+        function saveProfile(){
+            if (!state.user) return;
+            const fullName = byId("fullName").value.trim();
+            const email = byId("email").value.trim().toLowerCase();
+            const phone = byId("phone").value.trim();
+            const address = byId("address").value.trim();
+
+            if (!fullName || !email) {
+                showError("Full name and email are required.");
+                return;
+            }
+
+            const nextUser = {
+                ...state.user,
+                fullName: fullName,
+                name: fullName,
+                email: email,
+                phone: phone,
+                address: address
+            };
+
+            upsertUserInList(nextUser);
+            updateEmailReferences(email);
+            write("currentUser", nextUser);
+            state.user = nextUser;
+            state.oldEmail = email;
+            showSuccess("Profile updated successfully.");
+        }
+
+        function savePassword(){
+            if (!state.user) return;
+            const pass = byId("newPassword").value;
+            const confirm = byId("confirmPassword").value;
+            if (!pass && !confirm) {
+                showError("Enter a new password first.");
+                return;
+            }
+            if (pass.length < 4) {
+                showError("Password must be at least 4 characters.");
+                return;
+            }
+            if (pass !== confirm) {
+                showError("Passwords do not match.");
+                return;
+            }
+
+            state.user.password = pass;
+            write("currentUser", state.user);
+            upsertUserInList(state.user);
+            byId("newPassword").value = "";
+            byId("confirmPassword").value = "";
+            showSuccess("Password updated.");
+        }
+
+        function savePrefs(){
+            const theme = byId("themeSelect").value;
+            MMStorage.setItem("mm-theme", theme);
+            document.documentElement.setAttribute("data-theme", theme);
+
+            const prefs = read("userPrefs", {});
+            prefs[state.user.email || "default"] = {
+                notifyEmail: byId("notifyEmail").checked,
+                notifyDeals: byId("notifyDeals").checked
+            };
+            write("userPrefs", prefs);
+            showSuccess("Preferences saved.");
+        }
+
+        function makeRequest(type){
+            if (!state.user) return;
+            const amount = num(byId("amount").value);
+            const method = byId("method").value;
+
+            if (amount <= 0) {
+                showError("Enter a valid amount.");
+                return;
+            }
+
+            if (type === "Withdrawal" && amount > num(state.user.balance)) {
+                showError("Withdrawal amount cannot exceed wallet balance.");
+                return;
+            }
+
+            const requests = read("pendingRequests", []);
+            requests.push({
+                id: "REQ-" + Date.now() + "-" + Math.random().toString(36).slice(2,6),
+                email: state.user.email,
+                name: state.user.fullName || state.user.name || state.user.email,
+                type: type,
+                amount: amount,
+                method: type === "Withdrawal" ? "Balance" : method,
+                status: "Pending",
+                createdAt: new Date().toISOString()
+            });
+            write("pendingRequests", requests);
+            byId("amount").value = "";
+            renderRequests();
+            showSuccess(type + " request submitted.");
+        }
+
+        function cancelRequest(id){
+            const requests = read("pendingRequests", []);
+            const updated = requests.map(function(r){
+                if (r && r.id === id && r.email === state.user.email && String(r.status).toLowerCase() === "pending") {
+                    return { ...r, status: "Cancelled" };
+                }
+                return r;
+            });
+            write("pendingRequests", updated);
+            renderRequests();
+            showSuccess("Request cancelled.");
+        }
+
+        function renderRequests(){
+            const list = byId("requestList");
+            const requests = read("pendingRequests", []);
+            const mine = Array.isArray(requests)
+                ? requests.filter(function(r){ return r && r.email === state.user.email; }).sort(function(a,b){ return String(b.createdAt||"").localeCompare(String(a.createdAt||"")); })
+                : [];
+
+            if (!mine.length) {
+                list.innerHTML = '<div class="empty">No requests yet.</div>';
+                return;
+            }
+
+            list.innerHTML = mine.map(function(r){
+                const st = String(r.status || "Pending");
+                const cls = st.toLowerCase() === "approved" ? "approved" : (st.toLowerCase() === "declined" ? "declined" : "pending");
+                const canCancel = st.toLowerCase() === "pending";
+                return `
+                    <article class="req">
+                        <strong>${r.type} - ${money(r.amount)}</strong>
+                        <div class="meta">Method: ${r.method || "N/A"}</div>
+                        <div class="meta">Date: ${new Date(r.createdAt || Date.now()).toLocaleString()}</div>
+                        <span class="status ${cls}">${st}</span>
+                        ${canCancel ? `<button class="btn alt" type="button" onclick="cancelRequest('${r.id}')">Cancel</button>` : ""}
+                    </article>
+                `;
+            }).join("");
+        }
+
+        function exportData(){
+            if (!state.user) return;
+            const payload = {
+                profile: state.user,
+                requests: read("pendingRequests", []).filter(function(r){ return r && r.email === state.user.email; }),
+                orders: read("buyerOrders", []).filter(function(o){ return o && o.email === state.user.email; }),
+                exportedAt: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "matrixmarket-user-data.json";
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function logout(){
+            MMStorage.removeItem("currentUser");
+            showSuccess("Logged out. Redirecting...");
+            setTimeout(function(){ window.location.href = "login.html"; }, 900);
+        }
+
+        function deleteAccount(){
+            if (!state.user) return;
+            const check = prompt("Type DELETE to confirm account removal:");
+            if (check !== "DELETE") return;
+
+            const users = read("users", []);
+            const nextUsers = Array.isArray(users) ? users.filter(function(u){ return !(u && u.email === state.user.email); }) : [];
+            write("users", nextUsers);
+
+            const requests = read("pendingRequests", []);
+            const nextRequests = Array.isArray(requests) ? requests.filter(function(r){ return !(r && r.email === state.user.email); }) : [];
+            write("pendingRequests", nextRequests);
+
+            MMStorage.removeItem("currentUser");
+            MMStorage.removeItem("buyerInfo");
+            MMStorage.removeItem("buyerInfoDraft");
+            showSuccess("Account deleted. Redirecting...");
+            setTimeout(function(){ window.location.href = "register.html"; }, 1200);
+        }
+
+        function bind(){
+            byId("saveProfileBtn").addEventListener("click", saveProfile);
+            byId("savePasswordBtn").addEventListener("click", savePassword);
+            byId("savePrefsBtn").addEventListener("click", savePrefs);
+            byId("topupBtn").addEventListener("click", function(){ makeRequest("Top-Up"); });
+            byId("withdrawBtn").addEventListener("click", function(){ makeRequest("Withdrawal"); });
+            byId("exportBtn").addEventListener("click", exportData);
+            byId("logoutBtn").addEventListener("click", logout);
+            byId("deleteBtn").addEventListener("click", deleteAccount);
+            byId("showPass").addEventListener("change", function(){
+                const type = this.checked ? "text" : "password";
+                byId("newPassword").type = type;
+                byId("confirmPassword").type = type;
+            });
+        }
+
+        function init(){
+            if (!ensureUser()) return;
+            fillForm();
+            renderRequests();
+            bind();
+        }
+
+        window.cancelRequest = cancelRequest;
+        window.addEventListener("load", function () {
+            const ready = window.MMStorage && window.MMStorage.ready;
+            if (ready && typeof ready.then === "function") {
+                ready.finally(init);
+                return;
+            }
+            init();
+        });
+    </script>
+    <script defer src="upgrade.js"></script>
+</body>
+</html>
+
+

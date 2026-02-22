@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>MatrixMarket - Cart</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { margin: 0; font-family: "Poppins", sans-serif; background: #0f172a; color: #fff; }
+        header { background: rgba(0,0,0,.72); display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 1.4rem; font-weight: 800; color: #06b6d4; }
+        nav { display: flex; gap: 12px; flex-wrap: wrap; }
+        nav a { color: #fff; text-decoration: none; font-weight: 600; }
+        .page { width: min(1100px, 100% - 20px); margin: 18px auto 30px; display: grid; grid-template-columns: 1.45fr .9fr; gap: 14px; }
+        .card { background: rgba(255,255,255,.06); border: 1px solid rgba(148,163,184,.25); border-radius: 14px; padding: 12px; }
+        h1, h2, h3, p { margin: 0; }
+        .title { margin-bottom: 10px; color: #67e8f9; }
+        .cart-list { display: grid; gap: 9px; }
+        .cart-item { display: grid; grid-template-columns: 70px 1fr auto; gap: 10px; align-items: center; background: rgba(15,23,42,.62); border: 1px solid rgba(148,163,184,.2); border-radius: 10px; padding: 8px; }
+        .cart-item img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; background: #020617; }
+        .name { font-weight: 700; color: #e2e8f0; }
+        .meta { color: #94a3b8; font-size: .85rem; margin-top: 2px; }
+        .price { margin-top: 4px; font-weight: 700; color: #f8fafc; }
+        .qty { display: flex; align-items: center; gap: 6px; }
+        .qty button, .remove, .btn, .mini-btn { border: 1px solid rgba(148,163,184,.32); background: rgba(30,41,59,.75); color: #fff; border-radius: 8px; cursor: pointer; }
+        .qty button { width: 30px; height: 30px; }
+        .remove { padding: 7px 10px; }
+        .remove:hover, .qty button:hover { border-color: rgba(6,182,212,.7); }
+        .form-grid { display: grid; gap: 8px; }
+        input, textarea { width: 100%; border: 1px solid rgba(148,163,184,.25); background: rgba(15,23,42,.7); color: #e2e8f0; border-radius: 10px; padding: 10px; font: inherit; }
+        textarea { resize: vertical; min-height: 82px; }
+        .coupon-row { display: grid; grid-template-columns: 1fr auto; gap: 7px; }
+        .btn { padding: 10px 12px; font-weight: 700; background: linear-gradient(135deg, #06b6d4, #4f46e5); border: none; }
+        .btn:hover { filter: brightness(1.08); }
+        .mini-btn { padding: 8px 10px; }
+        .summary { display: grid; gap: 6px; font-size: .94rem; }
+        .line { display: flex; justify-content: space-between; gap: 8px; color: #cbd5e1; }
+        .total { border-top: 1px solid rgba(148,163,184,.2); margin-top: 6px; padding-top: 8px; font-size: 1.05rem; font-weight: 800; color: #e0f2fe; }
+        .foot-actions { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+        .empty { text-align: center; border: 1px dashed rgba(148,163,184,.4); border-radius: 10px; color: #94a3b8; padding: 16px; }
+        .hint { margin-top: 8px; font-size: .82rem; color: #94a3b8; }
+        .status { margin-top: 8px; font-size: .83rem; color: #67e8f9; }
+        @media (max-width: 900px) { .page { grid-template-columns: 1fr; } }
+    </style>
+    <link rel="stylesheet" href="upgrade.css">
+    <script src="firebase-online-storage.js"></script>
+</head>
+<body>
+    <header>
+        <div class="logo">MatrixMarket</div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="shop.html">Shop</a>
+            <a href="cart.html">Cart</a>
+            <a href="chat.html">Chat</a>
+        </nav>
+    </header>
+
+    <main class="page">
+        <section class="card">
+            <h2 class="title">Shopping Cart</h2>
+            <div id="cartList" class="cart-list"></div>
+            <div class="foot-actions">
+                <button class="mini-btn" id="clearCartBtn" type="button">Clear Cart</button>
+                <a class="mini-btn" href="shop.html" style="text-decoration:none; display:inline-flex; align-items:center;">Continue Shopping</a>
+            </div>
+        </section>
+
+        <aside class="card">
+            <h3 class="title">Order Details</h3>
+            <div class="form-grid">
+                <input id="buyerName" type="text" placeholder="Full Name">
+                <input id="buyerPhone" type="text" placeholder="Phone Number">
+                <input id="buyerEmail" type="email" placeholder="Email Address">
+                <textarea id="buyerAddress" placeholder="Delivery Address"></textarea>
+            </div>
+
+            <div style="margin-top:10px;">
+                <div class="coupon-row">
+                    <input id="couponInput" type="text" placeholder="Coupon code (SAVE10 or FREEDEL)">
+                    <button class="mini-btn" id="applyCouponBtn" type="button">Apply</button>
+                </div>
+            <div id="couponStatus" class="status"></div>
+            <div id="stockStatus" class="status"></div>
+            </div>
+
+            <div class="summary" id="summaryBox" style="margin-top:10px;">
+                <div class="line"><span>Items</span><span id="sumItems">0</span></div>
+                <div class="line"><span>Subtotal</span><span id="sumSubtotal">0.00 GMD</span></div>
+                <div class="line"><span>Discount</span><span id="sumDiscount">0.00 GMD</span></div>
+                <div class="line"><span>Shipping</span><span id="sumShipping">0.00 GMD</span></div>
+                <div class="line total"><span>Total</span><span id="sumTotal">0.00 GMD</span></div>
+            </div>
+
+            <button class="btn" id="checkoutBtn" type="button" style="margin-top:10px; width:100%;">Proceed to Checkout</button>
+            <p class="hint">Free shipping from 500 GMD. Coupon support: <b>SAVE10</b> and <b>FREEDEL</b>.</p>
+        </aside>
+    </main>
+
+    <script src="seller-core.js?v=20260222c"></script>
+    <script>
+        const state = {
+            cart: [],
+            coupon: null,
+            totals: { items: 0, subtotal: 0, discount: 0, shipping: 0, total: 0 },
+            liveProducts: []
+        };
+
+        const couponMap = {
+            SAVE10: function (subtotal) { return Math.min(subtotal * 0.10, 500); },
+            FREEDEL: function () { return 0; }
+        };
+
+        function byId(id) { return document.getElementById(id); }
+        function num(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }
+        function money(v) { return num(v).toFixed(2) + " GMD"; }
+        function read(key, fallback) {
+            try {
+                const data = JSON.parse(MMStorage.getItem(key) || "null");
+                return data ?? fallback;
+            } catch (_) {
+                return fallback;
+            }
+        }
+
+        function normalizeCart(raw) {
+            if (!Array.isArray(raw)) return [];
+            return raw
+                .filter(function (item) { return item && item.name; })
+                .map(function (item) {
+                    return {
+                        id: String(item.id || item.productId || ""),
+                        name: String(item.name || "Product"),
+                        seller: String(item.seller || "N/A"),
+                        sellerEmail: String(item.sellerEmail || ""),
+                        category: String(item.category || "general"),
+                        image: String(item.image || "https://via.placeholder.com/80"),
+                        price: num(item.price),
+                        quantity: Math.max(1, Math.floor(num(item.quantity || 1)))
+                    };
+                });
+        }
+
+        function persistCart() {
+            MMStorage.setItem("cart", JSON.stringify(state.cart));
+            MMStorage.setItem("cartItems", JSON.stringify(state.cart));
+        }
+
+        function loadLiveProducts() {
+            if (window.SellerCore && typeof window.SellerCore.getMarketplaceProducts === "function") {
+                state.liveProducts = window.SellerCore.getMarketplaceProducts({ includeOutOfStock: true, includeHidden: true });
+                return;
+            }
+            const fallback = read("products", []);
+            state.liveProducts = (Array.isArray(fallback) ? fallback : []).map(function (item, index) {
+                const stock = Math.max(0, Math.floor(num(item.stock || 0)));
+                return {
+                    id: String(item.id || ("PRD-" + index)),
+                    name: String(item.name || "Product"),
+                    seller: String(item.seller || item.sellerName || ""),
+                    sellerEmail: String(item.sellerEmail || ""),
+                    price: num(item.price || 0),
+                    stock: stock,
+                    image: String(item.image || ""),
+                    category: String(item.category || "general")
+                };
+            });
+        }
+
+        function matchLiveProduct(item) {
+            const id = String(item.id || "");
+            const name = String(item.name || "").toLowerCase();
+            const seller = String(item.seller || "").toLowerCase();
+            const sellerEmail = String(item.sellerEmail || "").toLowerCase();
+            return state.liveProducts.find(function (product) {
+                if (id && String(product.id || "") === id) return true;
+                const pName = String(product.name || "").toLowerCase();
+                const pSeller = String(product.seller || product.sellerName || "").toLowerCase();
+                const pSellerEmail = String(product.sellerEmail || "").toLowerCase();
+                if (sellerEmail && pSellerEmail && sellerEmail === pSellerEmail && name === pName) return true;
+                return name === pName && seller === pSeller;
+            }) || null;
+        }
+
+        function syncCartWithStock() {
+            loadLiveProducts();
+            const notes = [];
+            const next = [];
+
+            state.cart.forEach(function (item) {
+                const live = matchLiveProduct(item);
+                if (!live) {
+                    notes.push(item.name + " was removed (no longer available).");
+                    return;
+                }
+                const available = Math.max(0, Math.floor(num(live.stock)));
+                if (available <= 0) {
+                    notes.push(item.name + " was removed (out of stock).");
+                    return;
+                }
+
+                const wanted = Math.max(1, Math.floor(num(item.quantity || 1)));
+                const quantity = Math.min(wanted, available);
+                if (quantity < wanted) {
+                    notes.push(item.name + " quantity adjusted to " + quantity + " due to stock.");
+                }
+
+                next.push({
+                    id: String(item.id || live.id || ""),
+                    name: String(item.name || live.name || "Product"),
+                    seller: String(item.seller || live.seller || live.sellerName || "N/A"),
+                    sellerEmail: String(item.sellerEmail || live.sellerEmail || ""),
+                    category: String(item.category || live.category || "general"),
+                    image: String(item.image || live.image || "https://via.placeholder.com/80"),
+                    price: num(live.price || item.price),
+                    quantity: quantity
+                });
+            });
+
+            state.cart = next;
+            persistCart();
+
+            const stockStatus = byId("stockStatus");
+            stockStatus.textContent = notes.join(" ");
+        }
+
+        function loadBuyerForm() {
+            const draft = read("buyerInfoDraft", null);
+            const buyer = read("buyerInfo", null);
+            const user = read("currentUser", null);
+            const source = draft || buyer || user || {};
+            byId("buyerName").value = source.name || source.fullName || "";
+            byId("buyerPhone").value = source.phone || "";
+            byId("buyerEmail").value = source.email || "";
+            byId("buyerAddress").value = source.address || "";
+        }
+
+        function saveBuyerDraft() {
+            const buyer = {
+                name: byId("buyerName").value.trim(),
+                phone: byId("buyerPhone").value.trim(),
+                email: byId("buyerEmail").value.trim(),
+                address: byId("buyerAddress").value.trim()
+            };
+            MMStorage.setItem("buyerInfoDraft", JSON.stringify(buyer));
+        }
+
+        function computeTotals() {
+            const items = state.cart.reduce(function (sum, item) { return sum + item.quantity; }, 0);
+            const subtotal = state.cart.reduce(function (sum, item) { return sum + (item.price * item.quantity); }, 0);
+            let shipping = subtotal >= 500 || subtotal === 0 ? 0 : 25;
+            let discount = 0;
+
+            if (state.coupon === "SAVE10") discount = couponMap.SAVE10(subtotal);
+            if (state.coupon === "FREEDEL") shipping = 0;
+
+            const total = Math.max(0, subtotal - discount + shipping);
+            state.totals = { items: items, subtotal: subtotal, discount: discount, shipping: shipping, total: total };
+        }
+
+        function renderSummary() {
+            computeTotals();
+            byId("sumItems").textContent = String(state.totals.items);
+            byId("sumSubtotal").textContent = money(state.totals.subtotal);
+            byId("sumDiscount").textContent = "- " + money(state.totals.discount);
+            byId("sumShipping").textContent = money(state.totals.shipping);
+            byId("sumTotal").textContent = money(state.totals.total);
+            byId("checkoutBtn").disabled = state.cart.length === 0;
+        }
+
+        function renderCart() {
+            const list = byId("cartList");
+            if (!state.cart.length) {
+                list.innerHTML = '<div class="empty">Your cart is empty. Add items from the shop.</div>';
+                renderSummary();
+                return;
+            }
+
+            list.innerHTML = state.cart.map(function (item, index) {
+                const live = matchLiveProduct(item);
+                const liveStock = live ? Math.max(0, Math.floor(num(live.stock))) : 0;
+                return `
+                    <article class="cart-item">
+                        <img src="${item.image}" alt="${item.name}">
+                        <div>
+                            <div class="name">${item.name}</div>
+                            <div class="meta">Seller: ${item.seller}</div>
+                            <div class="meta">Unit: ${money(item.price)}</div>
+                            <div class="meta">In Stock: ${liveStock}</div>
+                            <div class="price">Subtotal: ${money(item.price * item.quantity)}</div>
+                        </div>
+                        <div>
+                            <div class="qty">
+                                <button type="button" onclick="updateQty(${index}, -1)">-</button>
+                                <span>${item.quantity}</span>
+                                <button type="button" onclick="updateQty(${index}, 1)">+</button>
+                            </div>
+                            <button class="remove" type="button" onclick="removeItem(${index})" style="margin-top:7px;">Remove</button>
+                        </div>
+                    </article>
+                `;
+            }).join("");
+
+            renderSummary();
+        }
+
+        function updateQty(index, delta) {
+            if (!state.cart[index]) return;
+            const live = matchLiveProduct(state.cart[index]);
+            const maxStock = live ? Math.max(0, Math.floor(num(live.stock))) : 0;
+            const next = state.cart[index].quantity + delta;
+            if (next <= 0) state.cart.splice(index, 1);
+            else if (maxStock > 0) state.cart[index].quantity = Math.min(next, maxStock);
+            else state.cart.splice(index, 1);
+            persistCart();
+            renderCart();
+        }
+
+        function removeItem(index) {
+            state.cart.splice(index, 1);
+            persistCart();
+            renderCart();
+        }
+
+        function clearCart() {
+            state.cart = [];
+            persistCart();
+            renderCart();
+            alert("Cart cleared");
+        }
+
+        function applyCoupon() {
+            const code = byId("couponInput").value.trim().toUpperCase();
+            const status = byId("couponStatus");
+
+            if (!code) {
+                state.coupon = null;
+                MMStorage.removeItem("cartCoupon");
+                status.textContent = "Coupon removed.";
+                renderSummary();
+                return;
+            }
+
+            if (!couponMap[code]) {
+                status.textContent = "Invalid coupon code.";
+                return;
+            }
+
+            state.coupon = code;
+            MMStorage.setItem("cartCoupon", code);
+            status.textContent = "Coupon applied: " + code;
+            renderSummary();
+        }
+
+        function checkout() {
+            syncCartWithStock();
+            if (!state.cart.length) {
+                alert("Your cart is empty");
+                return;
+            }
+
+            const buyer = {
+                name: byId("buyerName").value.trim(),
+                phone: byId("buyerPhone").value.trim(),
+                email: byId("buyerEmail").value.trim(),
+                address: byId("buyerAddress").value.trim()
+            };
+
+            if (!buyer.name || !buyer.phone || !buyer.email || !buyer.address) {
+                alert("Please fill all buyer information fields");
+                return;
+            }
+
+            MMStorage.setItem("buyerInfo", JSON.stringify(buyer));
+            MMStorage.setItem("buyerInfoDraft", JSON.stringify(buyer));
+            MMStorage.setItem("checkoutCart", JSON.stringify(state.cart));
+            MMStorage.setItem("checkoutMeta", JSON.stringify({
+                coupon: state.coupon,
+                subtotal: state.totals.subtotal,
+                discount: state.totals.discount,
+                shipping: state.totals.shipping,
+                total: state.totals.total
+            }));
+            window.location.href = "checkout.html";
+        }
+
+        function init() {
+            state.cart = normalizeCart(read("cart", []));
+            syncCartWithStock();
+            state.coupon = (MMStorage.getItem("cartCoupon") || "").toUpperCase() || null;
+            if (state.coupon) {
+                byId("couponInput").value = state.coupon;
+                byId("couponStatus").textContent = "Coupon active: " + state.coupon;
+            }
+
+            renderCart();
+            loadBuyerForm();
+
+            ["buyerName", "buyerPhone", "buyerEmail", "buyerAddress"].forEach(function (id) {
+                byId(id).addEventListener("input", saveBuyerDraft);
+            });
+
+            byId("applyCouponBtn").addEventListener("click", applyCoupon);
+            byId("clearCartBtn").addEventListener("click", clearCart);
+            byId("checkoutBtn").addEventListener("click", checkout);
+        }
+
+        window.addEventListener("load", function () {
+            const ready = window.MMStorage && window.MMStorage.ready;
+            if (ready && typeof ready.then === "function") {
+                ready.finally(init);
+                return;
+            }
+            init();
+        });
+    </script>
+    <script defer src="upgrade.js"></script>
+</body>
+</html>
+
+

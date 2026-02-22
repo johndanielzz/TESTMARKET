@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login - MatrixMarketplace</title>
+    <link rel="icon" type="image/x-icon" href="matrixx.png">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            font-family: "Poppins", sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b, #4f46e5, #06b6d4);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #fff;
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .login-box {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(18px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            width: 360px;
+            text-align: center;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .login-box h1 {
+            margin-bottom: 25px;
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 0 12px #06b6d4, 0 0 24px #4f46e5;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 14px;
+            margin: 12px 0;
+            border: none;
+            border-radius: 12px;
+            outline: none;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+            transition: 0.3s ease;
+        }
+
+        .login-box input:focus {
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 0 12px #06b6d4, 0 0 24px #4f46e5;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 18px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            color: white;
+            background: linear-gradient(135deg, #06b6d4, #4f46e5);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .login-box button[disabled] {
+            opacity: 0.72;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+        }
+
+        .login-state {
+            display: none;
+            margin-top: 10px;
+            color: #67e8f9;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .login-box button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(6, 182, 212, 0.6);
+        }
+
+        .login-box p {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+        }
+
+        .login-box a {
+            color: #06b6d4;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .login-box a:hover {
+            text-shadow: 0 0 8px #06b6d4, 0 0 15px #4f46e5;
+        }
+
+        /* Customer Care Section */
+        .support {
+            margin-top: 30px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            width: 360px;
+            animation: fadeIn 1s ease;
+        }
+
+        .support h2 {
+            font-size: 1.3rem;
+            color: #fff;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px #06b6d4, 0 0 20px #4f46e5;
+        }
+
+        .support p {
+            font-size: 0.95rem;
+            color: #e2e8f0;
+            margin-bottom: 15px;
+        }
+
+        .support a {
+            display: inline-block;
+            margin: 6px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #06b6d4, #4f46e5);
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+            transition: 0.3s;
+        }
+
+        .support a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(6, 182, 212, 0.6);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="upgrade.css">
+    <script src="firebase-online-storage.js"></script>
+</head>
+
+<body>
+    <div class="login-box">
+        <h1>Login</h1>
+        <form onsubmit="return loginUser(event)">
+            <input type="email" id="email" placeholder="Email Address" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button id="loginBtn" type="submit">Login</button>
+        </form>
+        <div id="loginState" class="login-state">Loging in...</div>
+        <p>Don’t have an account? <a href="register.html">Register here</a></p>
+    </div>
+
+    <!-- Customer Care Section -->
+    <div class="support">
+        <h2>Need Help?</h2>
+        <p>Our customer care is available 24/7. Reach us anytime:</p>
+        <a href="mailto:support@neo-marketplace.com">📧 Email Support</a>
+        <a href="tel:+2206785316">📞 Call Us</a>
+        <a href="https://wa.me/qr/FDKDUI5V625OE1">💬 Live Chat</a>
+    </div>
+
+    <script>
+        let loginBusy = false;
+
+        function normalizeEmail(value) {
+            return String(value || "").trim().toLowerCase();
+        }
+
+        function setBusy(isBusy, text) {
+            const btn = document.getElementById("loginBtn");
+            const state = document.getElementById("loginState");
+            loginBusy = Boolean(isBusy);
+            if (!btn) return;
+            btn.disabled = loginBusy;
+            btn.textContent = text || (loginBusy ? "Loging in..." : "Login");
+            if (state) state.style.display = loginBusy ? "block" : "none";
+        }
+
+        function deepField(source, key) {
+            let current = source;
+            for (let i = 0; i < 8; i += 1) {
+                if (!current || typeof current !== "object") break;
+                if (Object.prototype.hasOwnProperty.call(current, key)) {
+                    const value = current[key];
+                    if (value != null && value !== "") return value;
+                }
+                current = current.raw;
+            }
+            return "";
+        }
+
+        function recordEmail(record) {
+            return normalizeEmail(deepField(record, "email") || deepField(record, "mail"));
+        }
+
+        function recordPassword(record) {
+            return String(deepField(record, "password") || "");
+        }
+
+        function safeParse(raw, fallback) {
+            if (raw == null || raw === "") return fallback;
+            try {
+                const parsed = JSON.parse(raw);
+                return parsed == null ? fallback : parsed;
+            } catch (_) {
+                return fallback;
+            }
+        }
+
+        function readList(key) {
+            const parsed = safeParse(MMStorage.getItem(key), []);
+            if (Array.isArray(parsed)) return parsed;
+            if (parsed && typeof parsed === "object") {
+                return Object.keys(parsed).map(function (entryKey) {
+                    const entry = parsed[entryKey];
+                    if (entry && typeof entry === "object") {
+                        if (!entry.email && !entry.mail) return Object.assign({ email: entryKey }, entry);
+                        return entry;
+                    }
+                    return { email: entryKey, value: entry };
+                });
+            }
+            return [];
+        }
+
+        function isSellerRecord(record) {
+            const role = String(record && (record.role || record.accountType || "")).toLowerCase();
+            return Boolean(record && (record.isSeller || role === "seller"));
+        }
+
+        function hasActiveSellerAccess(record) {
+            const status = String(record && record.status || "").toLowerCase();
+            const payment = String(record && record.paymentStatus || "").toLowerCase();
+            const subscription = String(record && record.subscription || "").toLowerCase();
+            return ["approved", "active", "success", "paid"].includes(status) ||
+                ["approved", "active", "success", "paid"].includes(payment) ||
+                subscription === "active";
+        }
+
+        function wait(ms) {
+            return new Promise(function (resolve) { setTimeout(resolve, ms); });
+        }
+
+        function resolveAuth(email, password) {
+            const users = readList("users");
+            const sellers = readList("sellers");
+            const user = users.find(function (u) {
+                return recordEmail(u) === email && recordPassword(u) === password;
+            }) || null;
+            const seller = sellers.find(function (s) {
+                return recordEmail(s) === email;
+            }) || null;
+            const sellerByPassword = seller && recordPassword(seller) === password ? seller : null;
+            const authRecord = user || sellerByPassword;
+            if (!authRecord) return null;
+            const normalizedEmail = recordEmail(authRecord) || recordEmail(seller) || email;
+            return {
+                sessionUser: Object.assign({}, authRecord, seller || {}, { email: normalizedEmail }),
+                fromUsers: Boolean(user)
+            };
+        }
+
+        async function loginUser(event) {
+            event.preventDefault();
+            if (loginBusy) return false;
+            const ready = window.MMStorage && window.MMStorage.ready;
+            if (ready && typeof ready.then === "function") {
+                await ready.catch(function () {});
+            }
+
+            const email = normalizeEmail(document.getElementById("email").value);
+            const password = document.getElementById("password").value;
+
+            if (!email || !password) {
+                alert("⚠️ Enter both email and password.");
+                return false;
+            }
+
+            setBusy(true, "Loging in...");
+            let redirecting = false;
+            try {
+                let auth = resolveAuth(email, password);
+                if (!auth) {
+                    try {
+                        if (window.MMStorage && typeof window.MMStorage.syncNow === "function") {
+                            await window.MMStorage.syncNow();
+                        }
+                    } catch (_) {}
+                    await wait(350);
+                    auth = resolveAuth(email, password);
+                }
+
+                if (!auth) {
+                    alert("❌ Invalid email or password. Please try again.");
+                    return false;
+                }
+
+                const sessionUser = auth.sessionUser;
+                MMStorage.setItem("currentUser", JSON.stringify(sessionUser));
+                MMStorage.setItem("loggedInUser", JSON.stringify(sessionUser));
+                MMStorage.removeItem("lastRegisteredEmail");
+
+                if (isSellerRecord(sessionUser)) {
+                    MMStorage.setItem("currentSeller", JSON.stringify(sessionUser));
+                    if (hasActiveSellerAccess(sessionUser)) {
+                        alert("✅ Seller login successful! Redirecting...");
+                        redirecting = true;
+                        window.location.href = "seller-dashboard.html";
+                    } else {
+                        alert("✅ Login successful. Complete seller payment/approval to continue.");
+                        redirecting = true;
+                        window.location.href = "payment-status-sellers.html";
+                    }
+                    return false;
+                }
+
+                MMStorage.removeItem("currentSeller");
+                alert("✅ Login successful! Redirecting to home...");
+                redirecting = true;
+                window.location.href = "index.html";
+                return false;
+            } finally {
+                if (!redirecting) setBusy(false, "Login");
+            }
+        }
+    </script>
+    <script defer src="upgrade.js"></script>
+</body>
+</html>
+
+
+
+
